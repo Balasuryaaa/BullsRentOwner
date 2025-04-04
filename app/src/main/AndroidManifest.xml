@@ -25,7 +25,7 @@
             android:name=".customer_settings"
             android:exported="false" />
         <activity
-            android:name=".customer_ordermanagment"
+            android:name=".CustomerOrderManagement"
             android:exported="false" />
         <activity
             android:name=".customer_profile"

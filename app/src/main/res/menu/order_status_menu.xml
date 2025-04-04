@@ -1,6 +1,17 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/menu_waiting" android:title="Waiting" />
-    <item android:id="@+id/menu_success" android:title="Success" />
-    <item android:id="@+id/menu_pending" android:title="Pending" />
-    <item android:id="@+id/menu_payment_not_done" android:title="Payment Not Done" />
+    <item
+        android:id="@+id/menu_all"
+        android:title="All Orders" />
+    <item
+        android:id="@+id/menu_waiting"
+        android:title="Waiting" />
+    <item
+        android:id="@+id/menu_success"
+        android:title="Success" />
+    <item
+        android:id="@+id/menu_pending"
+        android:title="Pending" />
+    <item
+        android:id="@+id/menu_payment_not_done"
+        android:title="Payment Not Done" />
 </menu>

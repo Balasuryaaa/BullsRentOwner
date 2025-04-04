@@ -8,7 +8,7 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.firestore.FirebaseFirestore
-import org.checkerframework.checker.units.qual.C
+
 
 class customer_profile : AppCompatActivity() {
 

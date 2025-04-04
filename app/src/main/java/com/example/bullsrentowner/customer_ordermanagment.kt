@@ -3,8 +3,6 @@ package com.example.bullsrentowner
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -24,28 +22,24 @@ class CustomerOrderManagement : AppCompatActivity() {
     private val db = FirebaseFirestore.getInstance()
 
     private var customerMobile: String? = null
-    private var currentStatus: String = "waiting" // Default status
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_customer_ordermanagement)
+        setContentView(R.layout.activity_customer_ordermanagment)
 
-        // Initialize views
         initViews()
 
-        // Retrieve customer mobile number from SharedPreferences
         customerMobile = getSharedPreferences("CustomerProfile", MODE_PRIVATE)
             .getString("mobile", null)
 
         if (!customerMobile.isNullOrEmpty()) {
             fetchCustomerDetails(customerMobile!!)
             setupRecyclerView()
-            fetchOrders(currentStatus) // Load default orders
+            fetchAllOrders()
         } else {
             showToast("No Mobile Number Found!")
         }
 
-        // Handle Bottom Navigation item selection
         bottomNavigationView.selectedItemId = R.id.navigation_orders
         setupBottomNavigation()
     }
@@ -60,7 +54,7 @@ class CustomerOrderManagement : AppCompatActivity() {
 
     private fun setupRecyclerView() {
         orderRecyclerView.layoutManager = LinearLayoutManager(this)
-        orderAdapter = OrderAdapter(emptyList()) // Initialize adapter with empty list
+        orderAdapter = OrderAdapter(emptyList())
         orderRecyclerView.adapter = orderAdapter
     }
 
@@ -71,13 +65,13 @@ class CustomerOrderManagement : AppCompatActivity() {
                     navigateTo(AllListingsActivity::class.java)
                     true
                 }
-                R.id.navigation_orders -> true // Already on this page
+                R.id.navigation_orders -> true
                 R.id.navigation_settings -> {
-                    navigateTo(CustomerSettings::class.java)
+                    navigateTo(customer_settings::class.java)
                     true
                 }
                 R.id.navigation_profile -> {
-                    navigateTo(CustomerProfile::class.java)
+                    navigateTo(customer_profile::class.java)
                     true
                 }
                 else -> false
@@ -106,44 +100,28 @@ class CustomerOrderManagement : AppCompatActivity() {
             }
     }
 
-    private fun fetchOrders(status: String) {
+    private fun fetchAllOrders() {
         customerMobile?.let { mobile ->
             db.collection("orders")
                 .whereEqualTo("customerMobile", mobile)
-                .whereEqualTo("status", status)
                 .get()
                 .addOnSuccessListener { documents ->
                     val orders = documents.map { doc ->
                         Order(
                             id = doc.id,
                             machineName = doc.getString("machineName") ?: "Unknown",
-                            status = doc.getString("status") ?: "Unknown"
+                            status = doc.getString("status") ?: "Unknown",
+                            companyName = doc.getString("companyName") ?: "N/A",
+                            bookingDate = TODO()
                         )
                     }
-                    orderAdapter.updateOrders(orders) // Update adapter with new orders
+                    orderAdapter.updateOrders(orders)
                 }
                 .addOnFailureListener { e ->
                     logError("Error fetching orders", e)
                     showToast("Error loading orders.")
                 }
         }
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.order_status_menu, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        currentStatus = when (item.itemId) {
-            R.id.menu_waiting -> "waiting"
-            R.id.menu_success -> "success"
-            R.id.menu_pending -> "pending"
-            R.id.menu_payment_not_done -> "payment not done"
-            else -> return super.onOptionsItemSelected(item)
-        }
-        fetchOrders(currentStatus)
-        return true
     }
 
     private fun showToast(message: String) {

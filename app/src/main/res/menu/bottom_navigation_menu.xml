@@ -3,25 +3,25 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/nav_home"
-        android:icon="@drawable/ic_orders"
-        android:title="Home"
-        app:showAsAction="ifRoom"/>
-
-    <item
-        android:id="@+id/nav_bookings"
+        android:id="@+id/navigation_listings"
         android:icon="@drawable/ic_listings"
-        android:title="Bookings"
+        android:title="Listings"
         app:showAsAction="ifRoom"/>
 
     <item
-        android:id="@+id/nav_profile"
+        android:id="@+id/navigation_orders"
+        android:icon="@drawable/ic_orders"
+        android:title="Orders"
+        app:showAsAction="ifRoom"/>
+
+    <item
+        android:id="@+id/navigation_profile"
         android:icon="@drawable/ic_profile"
         android:title="Profile"
         app:showAsAction="ifRoom"/>
 
     <item
-        android:id="@+id/nav_settings"
+        android:id="@+id/navigation_settings"
         android:icon="@drawable/ic_settings"
         android:title="Settings"
         app:showAsAction="ifRoom"/>

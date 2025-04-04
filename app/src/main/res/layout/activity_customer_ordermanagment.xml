@@ -5,17 +5,20 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#FFFFFF"
     tools:context=".CustomerOrderManagement">
 
     <!-- Customer Info Display -->
     <LinearLayout
         android:id="@+id/main"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="16dp"
+        android:background="@android:color/white"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/recyclerViewOrders">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
         <TextView
             android:id="@+id/tvCustomerName"
@@ -23,7 +26,9 @@
             android:layout_height="wrap_content"
             android:text="Name: "
             android:textSize="18sp"
-            android:padding="10dp" />
+            android:textStyle="bold"
+            android:paddingVertical="6dp"
+            android:textColor="#333333" />
 
         <TextView
             android:id="@+id/tvCustomerMobile"
@@ -31,7 +36,8 @@
             android:layout_height="wrap_content"
             android:text="Mobile: "
             android:textSize="18sp"
-            android:padding="10dp" />
+            android:paddingVertical="6dp"
+            android:textColor="#333333" />
 
         <TextView
             android:id="@+id/tvCustomerLocation"
@@ -39,23 +45,37 @@
             android:layout_height="wrap_content"
             android:text="Location: "
             android:textSize="18sp"
-            android:padding="10dp" />
+            android:paddingVertical="6dp"
+            android:textColor="#333333" />
     </LinearLayout>
 
     <!-- Orders RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewOrders"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
+        android:padding="8dp"
+        android:clipToPadding="false"
+        android:scrollbars="vertical"
         app:layout_constraintTop_toBottomOf="@id/main"
-        app:layout_constraintBottom_toTopOf="@id/bottomNavBar" />
+        app:layout_constraintBottom_toTopOf="@id/bottomNavBar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:listitem="@layout/item_order" />
 
     <!-- Bottom Navigation Bar -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavBar"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:elevation="8dp"
         app:menu="@menu/bottom_navigation_menu"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:labelVisibilityMode="labeled"
+        app:itemIconTint="@color/black"
+        app:itemTextColor="@color/black"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
