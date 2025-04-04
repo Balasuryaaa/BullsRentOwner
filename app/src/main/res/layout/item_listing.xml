@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="6dp"
+    app:cardBackgroundColor="@android:color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <!-- Listing Image -->
+        <ImageView
+            android:id="@+id/ivListingImage"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/placeholder_image"/>
+
+        <!-- Listing Name -->
+        <TextView
+            android:id="@+id/tvListingName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Machine Name"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_marginTop="8dp"/>
+
+        <!-- Rent Price, Rent Type, and Delete Button -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="4dp"
+            android:gravity="center_vertical"
+            android:weightSum="3">
+
+            <TextView
+                android:id="@+id/tvRentPrice"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="₹100"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/holo_green_dark"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/tvRentType"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Per Day"
+                android:textSize="14sp"
+                android:textColor="@android:color/darker_gray"
+                android:layout_marginTop="4dp"
+                android:layout_weight="1"/>
+
+            <!-- Delete Button -->
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end">
+
+                <ImageButton
+                    android:id="@+id/ivDelete"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:minWidth="48dp"
+                    android:minHeight="48dp"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_delete"
+                    android:contentDescription="Delete"
+                    android:background="?attr/selectableItemBackground"
+                    android:layout_gravity="end"
+                    app:tint="@color/green"
+                    android:visibility="visible"/>
+            </FrameLayout>
+        </LinearLayout>
+
+        <!-- Location -->
+        <TextView
+            android:id="@+id/tvListingLocation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📍 City Name"
+            android:textSize="14sp"
+            android:textColor="@android:color/darker_gray"
+            android:layout_marginTop="4dp"/>
+
+        <!-- Extra Details (Size and Owner) - Now Below -->
+        <LinearLayout
+            android:id="@+id/extraDetailsLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:orientation="vertical"
+            android:paddingTop="8dp">
+
+            <TextView
+                android:id="@+id/tvDescription"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="14*15 size"
+                android:textSize="14sp"
+                android:textColor="@android:color/black"
+                android:paddingTop="4dp"/>
+
+            <TextView
+                android:id="@+id/tvOwnerName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Owner: John Doe"
+                android:textSize="14sp"
+                android:textColor="@android:color/darker_gray"
+                android:paddingTop="4dp"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

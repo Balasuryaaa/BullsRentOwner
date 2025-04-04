@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "487781971672",
+    "project_id": "bulls-rent-8a2f3",
+    "storage_bucket": "bulls-rent-8a2f3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:487781971672:android:3b28d7eed30dd2fdf609ad",
+        "android_client_info": {
+          "package_name": "com.example.bullsrentowner"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyArVeM-a-TZ1FzhDGHd9Auw-bc2N87ctrI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

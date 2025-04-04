@@ -1,0 +1,153 @@
+package com.example.bullsrentowner
+
+import android.os.Bundle
+import android.util.Log
+import android.view.View
+import android.widget.ProgressBar
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.QueryDocumentSnapshot
+
+class ViewListingsActivity : AppCompatActivity() {
+
+    private lateinit var auth: FirebaseAuth
+    private lateinit var firestore: FirebaseFirestore
+    private lateinit var rvListings: RecyclerView
+    private lateinit var tvNoListings: TextView
+    private lateinit var progressBar: ProgressBar
+    private lateinit var listingsAdapter: ListingsAdapter
+
+    private var userPhone: String? = null
+    private val listings = mutableListOf<Listing>()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_view_listings)
+
+        auth = FirebaseAuth.getInstance()
+        firestore = FirebaseFirestore.getInstance()
+
+        rvListings = findViewById(R.id.rvListings)
+        tvNoListings = findViewById(R.id.tvNoListings)
+        progressBar = findViewById(R.id.progressBar)
+
+        userPhone = intent.getStringExtra("USER_PHONE")?.trim()
+
+        if (userPhone.isNullOrEmpty()) {
+            Log.e(TAG, "Error: User phone number is missing!")
+            showToast("Session expired. Please log in again.")
+            finish()
+            return
+        }
+
+        Log.d(TAG, "Received USER_PHONE: '$userPhone'")
+
+        setupRecyclerView()
+        fetchUserListings()
+    }
+
+    private fun setupRecyclerView() {
+        listingsAdapter = ListingsAdapter(this, listings) { listing ->
+            deleteListing(listing.id)
+        }
+        rvListings.layoutManager = LinearLayoutManager(this)
+        rvListings.adapter = listingsAdapter
+    }
+
+    private fun fetchUserListings() {
+        userPhone?.let { phone ->
+            progressBar.visibility = View.VISIBLE
+            rvListings.visibility = View.GONE
+            tvNoListings.visibility = View.GONE
+
+            Log.d(TAG, "Fetching listings for ownerPhone: '$phone'")
+
+            firestore.collection("listings")
+                .whereEqualTo("ownerPhone", phone)
+                .get()
+                .addOnSuccessListener { documents ->
+                    progressBar.visibility = View.GONE
+                    listings.clear()
+
+                    if (documents.isEmpty) {
+                        Log.d(TAG, "No listings found for user.")
+                        tvNoListings.visibility = View.VISIBLE
+                    } else {
+                        listings.addAll(documents.mapNotNull { parseListing(it) })
+                        if (listings.isEmpty()) {
+                            tvNoListings.visibility = View.VISIBLE
+                        } else {
+                            listingsAdapter.notifyDataSetChanged()
+                            rvListings.visibility = View.VISIBLE
+                        }
+                    }
+                }
+                .addOnFailureListener { e ->
+                    progressBar.visibility = View.GONE
+                    Log.e(TAG, "Error fetching listings: ", e)
+                    showToast("Error fetching listings. Please try again.")
+                    tvNoListings.visibility = View.VISIBLE
+                }
+        }
+    }
+
+    private fun deleteListing(listingId: String) {
+        firestore.collection("listings").document(listingId)
+            .delete()
+            .addOnSuccessListener {
+                Log.d(TAG, "Listing deleted successfully: $listingId")
+                showToast("Listing deleted successfully")
+
+                listings.indexOfFirst { it.id == listingId }.takeIf { it != -1 }?.let { index ->
+                    listings.removeAt(index)
+                    listingsAdapter.notifyItemRemoved(index)
+                    if (listings.isEmpty()) tvNoListings.visibility = View.VISIBLE
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Error deleting listing: ", e)
+                showToast("Failed to delete listing")
+            }
+    }
+
+    private fun parseListing(document: QueryDocumentSnapshot): Listing? {
+        return try {
+            val data = document.data
+            Listing(
+                id = document.id,
+                productName = data["productName"] as? String ?: "",
+                rentType = data["rentType"] as? String ?: "",
+                rentPrice = (data["rentPrice"] as? Number)?.toDouble()
+                    ?: (data["rentPrice"] as? String)?.toDoubleOrNull() ?: 0.0,
+                description = data["description"] as? String ?: "",
+                imageBase64 = (data["imageBase64"] as? List<*>)?.filterIsInstance<String>()
+                    ?: (data["imageBase64"] as? String)?.let { listOf(it) } ?: emptyList(),
+                location = data["location"] as? String ?: "Unknown Location",
+                ownerId = data["ownerId"] as? String ?: "",
+                ownerName = data["ownerName"] as? String ?: "",
+                ownerPhone = data["ownerPhone"] as? String ?: "",
+                timestamp = data["timestamp"] as? com.google.firebase.Timestamp
+            ).also {
+                Log.d(TAG, "Parsed listing: ${it.id}, ${it.productName}, ${it.rentPrice}")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing listing ${document.id}: ", e)
+            null
+        }
+    }
+
+    private fun showToast(message: String) {
+        runOnUiThread {
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    companion object {
+        private const val TAG = "ViewListingsActivity"
+    }
+}

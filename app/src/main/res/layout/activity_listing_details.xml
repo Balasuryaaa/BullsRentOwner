@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Listing Image -->
+        <ImageView
+            android:id="@+id/ivListingImage"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/placeholder_image" />
+
+        <!-- Listing Name -->
+        <TextView
+            android:id="@+id/tvListingName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Listing Name"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginTop="10dp"/>
+
+        <!-- Owner Name -->
+        <TextView
+            android:id="@+id/tvOwnerName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Owner: "
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="5dp"/>
+
+        <!-- Description -->
+        <TextView
+            android:id="@+id/tvDescription"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Description"
+            android:textSize="16sp"
+            android:layout_marginTop="5dp"/>
+
+        <!-- Rent Price -->
+        <TextView
+            android:id="@+id/tvRentPrice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="₹0"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/holo_green_dark"
+            android:layout_marginTop="5dp"/>
+
+        <!-- Rent Type -->
+        <TextView
+            android:id="@+id/tvRentType"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="/ Per Day"
+            android:textSize="16sp"
+            android:layout_marginBottom="10dp"/>
+
+    </LinearLayout>
+</ScrollView>

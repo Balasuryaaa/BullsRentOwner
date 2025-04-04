@@ -1,0 +1,15 @@
+<resources>
+    <color name="colorPrimary">#6200EE</color>
+    <color name="colorPrimaryDark">#3700B3</color>
+    <color name="colorAccent">#03DAC5</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="purple_500">#7B1FA2</color>  <!-- Light Purple -->
+    <color name="blue">#007AFF</color>  <!-- iOS-like blue -->
+    <color name="green">#34C759</color>  <!-- iOS-like green -->
+    <color name="yellow">#FFEB3B</color>  <!-- Bright yellow color -->
+        <color name="primary">#6200EE</color> <!-- Light mode primary color -->
+        <color name="primaryDark">#121212</color> <!-- Dark mode primary color -->
+    <color name="teal_700">#00796B</color>
+
+</resources>

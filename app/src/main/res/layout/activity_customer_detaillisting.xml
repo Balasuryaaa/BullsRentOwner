@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@android:color/white"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- ViewPager2 for Images -->
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/viewPagerImages"
+            android:layout_width="match_parent"
+            android:layout_height="250dp"
+            android:layout_marginBottom="8dp"
+            android:clipToPadding="false"
+            android:clipChildren="false"
+            android:overScrollMode="never"
+            android:elevation="4dp"
+            android:background="@android:color/darker_gray" />
+
+
+        <!-- Product Info -->
+        <TextView
+            android:id="@+id/tvProductName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Product Name"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tvRentPrice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="₹0 / per day"
+            android:textSize="18sp"
+            android:textColor="@color/teal_700"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tvRentType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Rent Type"
+            android:textSize="14sp"
+            android:textColor="@color/black"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tvDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Description"
+            android:textSize="14sp"
+            android:textColor="@color/black"
+            android:layout_marginBottom="6dp" />
+
+        <TextView
+            android:id="@+id/tvLocation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Location"
+            android:textSize="14sp"
+            android:textColor="@color/black"
+            android:layout_marginBottom="6dp" />
+
+        <TextView
+            android:id="@+id/tvOwnerName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Owner Name"
+            android:textSize="14sp"
+            android:textColor="@color/black"
+            android:layout_marginBottom="6dp" />
+
+        <TextView
+            android:id="@+id/tvOwnerPhone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Owner Phone"
+            android:textSize="14sp"
+            android:textColor="@color/black"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Buttons Section -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <Button
+                android:id="@+id/btnContactCustomer"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Contact Owner"
+                android:backgroundTint="@color/teal_700"
+                android:textColor="@android:color/white"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/btnMakeBooking"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintWidth_percent="0.48" />
+
+            <Button
+                android:id="@+id/btnMakeBooking"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Make Booking"
+                android:backgroundTint="@color/black"
+                android:textColor="@android:color/white"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/btnContactCustomer"
+                app:layout_constraintWidth_percent="0.48" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </LinearLayout>
+
+</ScrollView>
