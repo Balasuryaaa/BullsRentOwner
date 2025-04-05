@@ -5,28 +5,16 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
-class customer_settings : AppCompatActivity() {
+class customer_settings : BaseActivity() {
 
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var tvCustomerMobile: TextView  // To show Customer Mobile Number
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_customer_settings)
-
-        // Setting up Edge-to-Edge UI
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
 
         // Initialize SharedPreferences
         sharedPreferences = getSharedPreferences("CustomerProfile", MODE_PRIVATE)

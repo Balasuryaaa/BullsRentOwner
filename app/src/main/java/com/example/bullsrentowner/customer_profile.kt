@@ -5,12 +5,10 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.firestore.FirebaseFirestore
 
-
-class customer_profile : AppCompatActivity() {
+class customer_profile : BaseActivity() {
 
     private lateinit var customerNameEditText: EditText
     private lateinit var customerMobileEditText: EditText

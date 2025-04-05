@@ -1,15 +1,30 @@
 <resources>
-    <color name="colorPrimary">#6200EE</color>
-    <color name="colorPrimaryDark">#3700B3</color>
-    <color name="colorAccent">#03DAC5</color>
+    <!-- Legacy Colors (Kept for backward compatibility) -->
+    <color name="colorPrimary">#FFD700</color>
+    <color name="colorPrimaryDark">#FFC700</color>
+    <color name="colorAccent">#000000</color>
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
     <color name="purple_500">#7B1FA2</color>  <!-- Light Purple -->
     <color name="blue">#007AFF</color>  <!-- iOS-like blue -->
     <color name="green">#34C759</color>  <!-- iOS-like green -->
-    <color name="yellow">#FFEB3B</color>  <!-- Bright yellow color -->
-        <color name="primary">#6200EE</color> <!-- Light mode primary color -->
-        <color name="primaryDark">#121212</color> <!-- Dark mode primary color -->
+    <color name="yellow">#FFD700</color>  <!-- Bright yellow color -->
+    <color name="primary">#FFD700</color> <!-- Light mode primary color -->
+    <color name="primaryDark">#FFC700</color> <!-- Dark mode primary color -->
     <color name="teal_700">#00796B</color>
 
+    <!-- New Unified Yellow-Black Color Scheme -->
+    <color name="background_color">#FFFFFF</color>
+    <color name="primary_color">#FFD700</color>
+    <color name="primary_dark_color">#FFC700</color>
+    <color name="accent_color">#000000</color>
+    <color name="text_primary_color">#000000</color>
+    <color name="text_secondary_color">#333333</color>
+    <color name="divider_color">#EEEEEE</color>
+    <color name="card_background">#FFFFFF</color>
+    <color name="button_color">#FFD700</color>
+    <color name="button_text_color">#000000</color>
+    <color name="success_color">#34C759</color>
+    <color name="warning_color">#F39C12</color>
+    <color name="nav_bar_color">#FFD700</color>
 </resources>

@@ -11,14 +11,13 @@ import android.text.InputType
 import android.util.Base64
 import android.util.Log
 import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
 import androidx.viewpager2.widget.ViewPager2
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.*
 
-class Customer_detaillisting : AppCompatActivity() {
+class Customer_detaillisting : BaseActivity() {
 
     private lateinit var productName: TextView
     private lateinit var rentType: TextView

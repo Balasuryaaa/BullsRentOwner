@@ -1,15 +1,28 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Light Theme Without Action Bar -->
+    <!-- Base Theme Without Action Bar and Full Screen with Yellow/Black Colors -->
     <style name="Theme.BullsRentOwner" parent="Theme.Material3.Light.NoActionBar">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowActionBar">false</item>
-        <item name="android:statusBarColor">@color/primary</item>
-        <item name="android:navigationBarColor">@color/primary</item>
+        <item name="android:statusBarColor">@color/primary_color</item>
+        <item name="android:navigationBarColor">@color/primary_color</item>
         <item name="android:windowFullscreen">true</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+        <item name="android:windowBackground">@color/background_color</item>
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="o_mr1">shortEdges</item>
+        
+        <!-- App Colors -->
+        <item name="colorPrimary">@color/primary_color</item>
+        <item name="colorPrimaryDark">@color/primary_dark_color</item>
+        <item name="colorAccent">@color/accent_color</item>
+        <item name="android:textColorPrimary">@color/text_primary_color</item>
+        <item name="android:textColorSecondary">@color/text_secondary_color</item>
+        
+        <!-- Bottom Navigation Color -->
+        <item name="bottomNavigationStyle">@style/BottomNavigationViewStyle</item>
     </style>
 
-    <style name="Theme.NoActionBar" parent="Theme.Material3.Light.NoActionBar">
-        <item name="android:windowNoTitle">true</item>
-        <item name="android:windowActionBar">false</item>
+    <!-- Legacy Theme for Backward Compatibility -->
+    <style name="Theme.NoActionBar" parent="Theme.BullsRentOwner">
     </style>
 </resources>

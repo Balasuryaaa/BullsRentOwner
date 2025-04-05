@@ -1,66 +1,38 @@
-import android.content.Intent
+package com.example.bullsrentowner
+
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.View
-import android.view.WindowInsets
-import android.view.WindowManager
-import android.view.animation.AnimationUtils
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.example.bullsrentowner.DashBoard
-import com.example.bullsrentowner.LoginPage
-import com.example.bullsrentowner.R
-import com.google.firebase.auth.FirebaseAuth
 
-class MainActivity : AppCompatActivity() {
-    private lateinit var auth: FirebaseAuth
+/**
+ * Base activity that implements full-screen behavior.
+ * All activities should extend this class to have a consistent look and feel.
+ */
+open class BaseActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // Apply full-screen mode
         setupFullScreen()
-        
-        setContentView(R.layout.activity_main)
-
-        auth = FirebaseAuth.getInstance()
-
-        // Load animations
-        val fadeInAnim = AnimationUtils.loadAnimation(this, R.anim.fade_in)
-        val scaleAnim = AnimationUtils.loadAnimation(this, R.anim.scale_anim)
-
-        findViewById<ImageView>(R.id.logo).startAnimation(scaleAnim)
-        findViewById<TextView>(R.id.slogan).startAnimation(fadeInAnim)
-        findViewById<TextView>(R.id.name).startAnimation(fadeInAnim)
-
-        // Delay and navigate to the next screen
-        Handler(Looper.getMainLooper()).postDelayed({
-            if (auth.currentUser != null) {
-                startActivity(Intent(this, DashBoard::class.java))
-            } else {
-                startActivity(Intent(this, LoginPage::class.java))
-            }
-            finish()
-        }, 2500)
     }
-    
-    private fun setupFullScreen() {
+
+    /**
+     * Set up full-screen mode with transparent status and navigation bars
+     */
+    protected fun setupFullScreen() {
         // Make the app full screen with edge-to-edge content
         WindowCompat.setDecorFitsSystemWindows(window, false)
         
-        // Control system bars visibility
+        // Control system bars visibility and behavior
         val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
         windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         
         // Hide both the status bar and navigation bar
         windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
         
-        // Make the status bar and navigation bar transparent (as a fallback)
+        // Make the status bar and navigation bar transparent
         window.statusBarColor = android.graphics.Color.TRANSPARENT
         window.navigationBarColor = android.graphics.Color.TRANSPARENT
         
@@ -77,4 +49,4 @@ class MainActivity : AppCompatActivity() {
             )
         }
     }
-}
+} 

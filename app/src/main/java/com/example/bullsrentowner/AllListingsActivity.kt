@@ -9,7 +9,6 @@ import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.firestore.FirebaseFirestore
@@ -17,7 +16,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.Timestamp
 
-class AllListingsActivity : AppCompatActivity() {
+class AllListingsActivity : BaseActivity() {
 
     private lateinit var firestore: FirebaseFirestore
     private lateinit var rvListings: RecyclerView
@@ -49,41 +48,18 @@ class AllListingsActivity : AppCompatActivity() {
         setupRecyclerView()
         setupSearchAndSort()
 
-        // ✅ Check Internet Before Fetching Data
+        // Check Internet Before Fetching Data
         if (isInternetAvailable()) {
             fetchAllListings()
         } else {
             Toast.makeText(this, "No internet connection!", Toast.LENGTH_SHORT).show()
         }
 
-        // ✅ Ensure "Listings" is the selected tab
+        // Set "Listings" as the selected tab
         bottomNavigationView.selectedItemId = R.id.navigation_listings
 
-        // ✅ Bottom Navigation Handling
-        bottomNavigationView.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.navigation_listings -> true  // Stay on this page
-                R.id.navigation_orders -> {
-                    startActivity(Intent(this, CustomerOrderManagement::class.java))
-                    overridePendingTransition(0, 0)
-                    finish()
-                    true
-                }
-                R.id.navigation_settings -> {
-                    startActivity(Intent(this, customer_settings::class.java))
-                    overridePendingTransition(0, 0)
-                    finish()
-                    true
-                }
-                R.id.navigation_profile -> {
-                    startActivity(Intent(this, customer_profile::class.java))
-                    overridePendingTransition(0, 0)
-                    finish()
-                    true
-                }
-                else -> false
-            }
-        }
+        // Bottom Navigation Handling
+        setupBottomNavigation()
     }
 
     private fun setupRecyclerView() {
@@ -93,7 +69,7 @@ class AllListingsActivity : AppCompatActivity() {
     }
 
     private fun setupSearchAndSort() {
-        // ✅ Search Functionality
+        // Search Functionality
         etSearch.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 filterListings()
@@ -102,7 +78,7 @@ class AllListingsActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
 
-        // ✅ Sorting Options
+        // Sorting Options
         val sortOptions = arrayOf("Default", "Price: Low to High", "Price: High to Low")
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, sortOptions)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -121,10 +97,10 @@ class AllListingsActivity : AppCompatActivity() {
         rvListings.visibility = View.GONE
         tvNoListings.visibility = View.GONE
 
-        // ✅ Firestore Connection Debugging
+        // Firestore Connection Debugging
         Log.d(TAG, "Attempting to fetch listings...")
 
-        firestore.collection("listings")  // ✅ Ensure collection name is correct
+        firestore.collection("listings")  // Ensure collection name is correct
             .get()
             .addOnSuccessListener { documents ->
                 progressBar.visibility = View.GONE
@@ -138,7 +114,7 @@ class AllListingsActivity : AppCompatActivity() {
                         val listing = parseListing(document)
                         listing?.let { listings.add(it) }
                     }
-                    filterListings()  // ✅ Apply search & sort immediately after fetching
+                    filterListings()  // Apply search & sort immediately after fetching
                 }
             }
             .addOnFailureListener { e ->
@@ -153,7 +129,7 @@ class AllListingsActivity : AppCompatActivity() {
         val searchText = etSearch.text.toString().trim().lowercase()
         val selectedSort = spinnerSort.selectedItem.toString()
 
-        // ✅ Apply search filter
+        // Apply search filter
         filteredListings.clear()
         filteredListings.addAll(
             listings.filter {
@@ -162,13 +138,13 @@ class AllListingsActivity : AppCompatActivity() {
             }
         )
 
-        // ✅ Apply sorting
+        // Apply sorting
         when (selectedSort) {
             "Price: Low to High" -> filteredListings.sortBy { it.rentPrice }
             "Price: High to Low" -> filteredListings.sortByDescending { it.rentPrice }
         }
 
-        // ✅ Update UI
+        // Update UI
         allListingsAdapter.notifyDataSetChanged()
         rvListings.visibility = if (filteredListings.isEmpty()) View.GONE else View.VISIBLE
         tvNoListings.visibility = if (filteredListings.isEmpty()) View.VISIBLE else View.GONE
@@ -215,12 +191,39 @@ class AllListingsActivity : AppCompatActivity() {
         }
     }
 
-    // ✅ Check Internet Connection
+    // Check Internet Connection
     private fun isInternetAvailable(): Boolean {
         val connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
         val network = connectivityManager.activeNetwork ?: return false
         val activeNetwork = connectivityManager.getNetworkCapabilities(network) ?: return false
         return activeNetwork.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
+    private fun setupBottomNavigation() {
+        bottomNavigationView.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.navigation_listings -> true  // Stay on this page
+                R.id.navigation_orders -> {
+                    startActivity(Intent(this, CustomerOrderManagement::class.java))
+                    overridePendingTransition(0, 0)
+                    finish()
+                    true
+                }
+                R.id.navigation_settings -> {
+                    startActivity(Intent(this, customer_settings::class.java))
+                    overridePendingTransition(0, 0)
+                    finish()
+                    true
+                }
+                R.id.navigation_profile -> {
+                    startActivity(Intent(this, customer_profile::class.java))
+                    overridePendingTransition(0, 0)
+                    finish()
+                    true
+                }
+                else -> false
+            }
+        }
     }
 
     companion object {
