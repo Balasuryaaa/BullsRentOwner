@@ -1,6 +1,8 @@
 package com.example.bullsrentowner
 
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -13,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QueryDocumentSnapshot
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.firebase.Timestamp
 
 class AllListingsActivity : AppCompatActivity() {
 
@@ -45,12 +48,18 @@ class AllListingsActivity : AppCompatActivity() {
 
         setupRecyclerView()
         setupSearchAndSort()
-        fetchAllListings()
 
-        // Fix: Ensure "Listings" is the selected tab
+        // ✅ Check Internet Before Fetching Data
+        if (isInternetAvailable()) {
+            fetchAllListings()
+        } else {
+            Toast.makeText(this, "No internet connection!", Toast.LENGTH_SHORT).show()
+        }
+
+        // ✅ Ensure "Listings" is the selected tab
         bottomNavigationView.selectedItemId = R.id.navigation_listings
 
-        // Bottom Navigation Bar Item Selection
+        // ✅ Bottom Navigation Handling
         bottomNavigationView.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.navigation_listings -> true  // Stay on this page
@@ -84,7 +93,7 @@ class AllListingsActivity : AppCompatActivity() {
     }
 
     private fun setupSearchAndSort() {
-        // Search Functionality
+        // ✅ Search Functionality
         etSearch.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 filterListings()
@@ -93,7 +102,7 @@ class AllListingsActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
 
-        // Sorting Options
+        // ✅ Sorting Options
         val sortOptions = arrayOf("Default", "Price: Low to High", "Price: High to Low")
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, sortOptions)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -103,7 +112,6 @@ class AllListingsActivity : AppCompatActivity() {
             override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
                 filterListings()
             }
-
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
     }
@@ -113,25 +121,29 @@ class AllListingsActivity : AppCompatActivity() {
         rvListings.visibility = View.GONE
         tvNoListings.visibility = View.GONE
 
-        firestore.collection("listings")
+        // ✅ Firestore Connection Debugging
+        Log.d(TAG, "Attempting to fetch listings...")
+
+        firestore.collection("listings")  // ✅ Ensure collection name is correct
             .get()
             .addOnSuccessListener { documents ->
                 progressBar.visibility = View.GONE
                 listings.clear()
 
                 if (documents.isEmpty) {
+                    Log.d(TAG, "No listings found in Firestore.")
                     tvNoListings.visibility = View.VISIBLE
                 } else {
                     documents.forEach { document ->
                         val listing = parseListing(document)
                         listing?.let { listings.add(it) }
                     }
-                    filterListings()  // Apply search and sort immediately after fetching data
+                    filterListings()  // ✅ Apply search & sort immediately after fetching
                 }
             }
             .addOnFailureListener { e ->
                 progressBar.visibility = View.GONE
-                Log.e(TAG, "Error fetching listings: ", e)
+                Log.e(TAG, "Firestore fetch failed: ", e)
                 Toast.makeText(this, "Error fetching listings", Toast.LENGTH_SHORT).show()
                 tvNoListings.visibility = View.VISIBLE
             }
@@ -141,7 +153,7 @@ class AllListingsActivity : AppCompatActivity() {
         val searchText = etSearch.text.toString().trim().lowercase()
         val selectedSort = spinnerSort.selectedItem.toString()
 
-        // Apply search filter
+        // ✅ Apply search filter
         filteredListings.clear()
         filteredListings.addAll(
             listings.filter {
@@ -150,13 +162,13 @@ class AllListingsActivity : AppCompatActivity() {
             }
         )
 
-        // Apply sorting
+        // ✅ Apply sorting
         when (selectedSort) {
             "Price: Low to High" -> filteredListings.sortBy { it.rentPrice }
             "Price: High to Low" -> filteredListings.sortByDescending { it.rentPrice }
         }
 
-        // Update UI
+        // ✅ Update UI
         allListingsAdapter.notifyDataSetChanged()
         rvListings.visibility = if (filteredListings.isEmpty()) View.GONE else View.VISIBLE
         tvNoListings.visibility = if (filteredListings.isEmpty()) View.VISIBLE else View.GONE
@@ -165,25 +177,50 @@ class AllListingsActivity : AppCompatActivity() {
     private fun parseListing(document: QueryDocumentSnapshot): Listing? {
         return try {
             val data = document.data
-            val images = (data["imageBase64"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+            
+            // Log raw data for debugging
+            Log.d(TAG, "Raw listing data: ${document.id} - $data")
+            
+            // Handle both String and List imageBase64 formats
+            val imageBase64List = when {
+                data["imageBase64"] is List<*> -> (data["imageBase64"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                data["imageBase64"] is String -> listOf(data["imageBase64"] as String)
+                else -> emptyList()
+            }
+            
+            // Handle different rentPrice formats (String or Number)
+            val rentPrice = when {
+                data["rentPrice"] is Number -> (data["rentPrice"] as Number).toDouble()
+                data["rentPrice"] is String -> (data["rentPrice"] as String).toDoubleOrNull() ?: 0.0
+                else -> 0.0
+            }
 
             Listing(
                 id = document.id,
                 productName = data["productName"] as? String ?: "",
                 rentType = data["rentType"] as? String ?: "",
-                rentPrice = (data["rentPrice"] as? Number)?.toDouble()
-                    ?: (data["rentPrice"] as? String)?.toDoubleOrNull() ?: 0.0,
+                rentPrice = rentPrice,
                 description = data["description"] as? String ?: "",
-                imageBase64 = images,
+                imageBase64 = imageBase64List,
                 location = data["location"] as? String ?: "",
                 ownerName = data["ownerName"] as? String ?: "",
                 ownerPhone = data["ownerPhone"] as? String ?: "",
-                timestamp = data["timestamp"] as? com.google.firebase.Timestamp
-            )
+                timestamp = data["timestamp"] as? Timestamp
+            ).also {
+                Log.d(TAG, "Successfully parsed listing: ${it.id}, ${it.productName}")
+            }
         } catch (e: Exception) {
-            Log.e(TAG, "Error parsing listing ${document.id}: ", e)
+            Log.e(TAG, "Error parsing listing ${document.id}: ${e.message}", e)
             null
         }
+    }
+
+    // ✅ Check Internet Connection
+    private fun isInternetAvailable(): Boolean {
+        val connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val activeNetwork = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return activeNetwork.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
     companion object {

@@ -122,12 +122,43 @@ class Customer_detaillisting : AppCompatActivity() {
             .get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
-                    val listing = document.toObject(ListingCustomer::class.java)
-                    if (listing != null) {
-                        Log.d(TAG, "Listing loaded successfully!")
-                        showListing(listing)
-                    } else {
-                        Log.e(TAG, "Listing document exists but failed to parse!")
+                    try {
+                        val data = document.data
+                        if (data != null) {
+                            Log.d(TAG, "Listing data: $data")
+                            
+                            // Create listing manually instead of using toObject
+                            val listing = ListingCustomer(
+                                productName = data["productName"] as? String,
+                                rentType = data["rentType"] as? String,
+                                rentPrice = when {
+                                    data["rentPrice"] is Number -> (data["rentPrice"] as Number).toString()
+                                    data["rentPrice"] is String -> data["rentPrice"] as String
+                                    else -> "0"
+                                },
+                                description = data["description"] as? String,
+                                location = data["location"] as? String,
+                                ownerName = data["ownerName"] as? String,
+                                ownerPhone = data["ownerPhone"] as? String,
+                                imageUrls = when {
+                                    data["imageUrls"] is List<*> -> (data["imageUrls"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                                    else -> emptyList()
+                                },
+                                imageBase64 = when {
+                                    data["imageBase64"] is List<*> -> (data["imageBase64"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                                    data["imageBase64"] is String -> listOf(data["imageBase64"] as String)
+                                    else -> emptyList()
+                                }
+                            )
+                            
+                            Log.d(TAG, "Listing loaded successfully!")
+                            showListing(listing)
+                        } else {
+                            Log.e(TAG, "Listing document data is null!")
+                            showNotFound()
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error parsing listing data: ${e.message}", e)
                         showNotFound()
                     }
                 } else {
@@ -136,7 +167,7 @@ class Customer_detaillisting : AppCompatActivity() {
                 }
             }
             .addOnFailureListener { e ->
-                Log.e(TAG, "Error fetching listing: ${e.message}")
+                Log.e(TAG, "Error fetching listing: ${e.message}", e)
                 Toast.makeText(this, "Error fetching listing: ${e.message}", Toast.LENGTH_SHORT).show()
                 finish()
             }

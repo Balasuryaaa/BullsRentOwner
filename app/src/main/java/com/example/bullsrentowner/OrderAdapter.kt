@@ -38,7 +38,7 @@ class OrderAdapter(private var orders: List<Order>) : RecyclerView.Adapter<Order
     override fun onBindViewHolder(holder: OrderViewHolder, position: Int) {
         val order = orders[position]
         holder.machineName.text = order.machineName
-        holder.companyName.text = "Company: ${order.companyName}"
+        holder.companyName.text = order.companyName
         holder.orderStatus.text = "Status: ${order.status}"
         holder.bookingDate.text = "Booked On: ${formatDate(order.bookingDate)}"
     }
@@ -57,8 +57,8 @@ class OrderAdapter(private var orders: List<Order>) : RecyclerView.Adapter<Order
     }
 
     private fun formatDate(timestamp: Long): String {
-        val sdf = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
-        return sdf.format(Date(timestamp))
+        val dateFormat = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault())
+        return dateFormat.format(Date(timestamp))
     }
 }
 

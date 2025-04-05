@@ -10,6 +10,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.firestore.FirebaseFirestore
+import java.text.SimpleDateFormat
+import java.util.*
 
 class CustomerOrderManagement : AppCompatActivity() {
 
@@ -102,24 +104,100 @@ class CustomerOrderManagement : AppCompatActivity() {
 
     private fun fetchAllOrders() {
         customerMobile?.let { mobile ->
-            db.collection("orders")
-                .whereEqualTo("customerMobile", mobile)
+            Log.d(TAG, "Fetching orders for customer: $mobile")
+            
+            // Use get() instead of addSnapshotListener to avoid permissions issues
+            db.collection("bookings")
+                .whereEqualTo("customerPhone", mobile)
                 .get()
                 .addOnSuccessListener { documents ->
-                    val orders = documents.map { doc ->
-                        Order(
-                            id = doc.id,
-                            machineName = doc.getString("machineName") ?: "Unknown",
-                            status = doc.getString("status") ?: "Unknown",
-                            companyName = doc.getString("companyName") ?: "N/A",
-                            bookingDate = TODO()
-                        )
+                    Log.d(TAG, "Query executed successfully. Found ${documents.size()} documents")
+                    val ordersList = mutableListOf<Order>()
+                    
+                    for (document in documents) {
+                        try {
+                            val data = document.data
+                            Log.d(TAG, "Processing document: ${document.id}")
+                            
+                            // Parse booking time
+                            val bookingTimeStr = data["bookingTime"] as? String ?: ""
+                            val bookingDate = if (bookingTimeStr.isNotEmpty()) {
+                                try {
+                                    SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault())
+                                        .parse(bookingTimeStr)?.time ?: System.currentTimeMillis()
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Error parsing date: $bookingTimeStr", e)
+                                    System.currentTimeMillis()
+                                }
+                            } else {
+                                System.currentTimeMillis()
+                            }
+
+                            // Look up the product name from the listing ID
+                            val listingId = data["listingId"] as? String
+                            
+                            if (listingId != null) {
+                                // We'll fetch product details in a second pass to avoid permissions issues
+                                val order = Order(
+                                    id = document.id,
+                                    machineName = data["productName"] as? String ?: "Loading...", // Placeholder initially
+                                    status = data["status"] as? String ?: "Unknown",
+                                    companyName = "Owner: " + (data["ownerPhone"] as? String ?: "N/A"),
+                                    bookingDate = bookingDate
+                                )
+                                ordersList.add(order)
+                                
+                                // Update the UI with the orders we have so far
+                                if (ordersList.isNotEmpty()) {
+                                    orderAdapter.updateOrders(ordersList)
+                                }
+                                
+                                // Now fetch the listing details to get the product name
+                                db.collection("listings").document(listingId)
+                                    .get()
+                                    .addOnSuccessListener { listingDoc ->
+                                        if (listingDoc.exists()) {
+                                            val productName = listingDoc.getString("productName") ?: "Unknown Product"
+                                            // Find and update the order in our list
+                                            val index = ordersList.indexOfFirst { it.id == document.id }
+                                            if (index >= 0) {
+                                                val updatedOrder = ordersList[index].copy(
+                                                    machineName = productName,
+                                                    companyName = "Owner: " + (listingDoc.getString("ownerName") ?: "N/A")
+                                                )
+                                                ordersList[index] = updatedOrder
+                                                orderAdapter.updateOrders(ordersList)
+                                            }
+                                        }
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Log.e(TAG, "Error fetching listing details: ${e.message}", e)
+                                    }
+                            } else {
+                                // If we don't have a listing ID, just add the order with what we have
+                                val order = Order(
+                                    id = document.id,
+                                    machineName = "Unknown Product",
+                                    status = data["status"] as? String ?: "Unknown",
+                                    companyName = "Owner: " + (data["ownerPhone"] as? String ?: "N/A"),
+                                    bookingDate = bookingDate
+                                )
+                                ordersList.add(order)
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error processing order document: ${e.message}", e)
+                        }
                     }
-                    orderAdapter.updateOrders(orders)
+                    
+                    // Final update of adapter with all processed orders
+                    if (ordersList.isEmpty()) {
+                        // Show empty state
+                        showToast("No orders found")
+                    }
                 }
                 .addOnFailureListener { e ->
-                    logError("Error fetching orders", e)
-                    showToast("Error loading orders.")
+                    Log.e(TAG, "Error fetching orders: ${e.message}", e)
+                    showToast("Error loading orders: ${e.message}")
                 }
         }
     }
@@ -130,5 +208,9 @@ class CustomerOrderManagement : AppCompatActivity() {
 
     private fun logError(message: String, e: Exception) {
         Log.e("Firestore", message, e)
+    }
+
+    companion object {
+        private const val TAG = "CustomerOrderManagement"
     }
 }

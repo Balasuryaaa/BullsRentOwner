@@ -118,25 +118,41 @@ class ViewListingsActivity : AppCompatActivity() {
     private fun parseListing(document: QueryDocumentSnapshot): Listing? {
         return try {
             val data = document.data
+            
+            // Log raw data for debugging
+            Log.d(TAG, "Raw listing data: ${document.id} - $data")
+            
+            // Handle both String and List imageBase64 formats
+            val imageBase64List = when {
+                data["imageBase64"] is List<*> -> (data["imageBase64"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                data["imageBase64"] is String -> listOf(data["imageBase64"] as String)
+                else -> emptyList()
+            }
+            
+            // Handle different rentPrice formats (String or Number)
+            val rentPrice = when {
+                data["rentPrice"] is Number -> (data["rentPrice"] as Number).toDouble()
+                data["rentPrice"] is String -> (data["rentPrice"] as String).toDoubleOrNull() ?: 0.0
+                else -> 0.0
+            }
+
             Listing(
                 id = document.id,
                 productName = data["productName"] as? String ?: "",
                 rentType = data["rentType"] as? String ?: "",
-                rentPrice = (data["rentPrice"] as? Number)?.toDouble()
-                    ?: (data["rentPrice"] as? String)?.toDoubleOrNull() ?: 0.0,
+                rentPrice = rentPrice,
                 description = data["description"] as? String ?: "",
-                imageBase64 = (data["imageBase64"] as? List<*>)?.filterIsInstance<String>()
-                    ?: (data["imageBase64"] as? String)?.let { listOf(it) } ?: emptyList(),
+                imageBase64 = imageBase64List,
                 location = data["location"] as? String ?: "Unknown Location",
                 ownerId = data["ownerId"] as? String ?: "",
                 ownerName = data["ownerName"] as? String ?: "",
                 ownerPhone = data["ownerPhone"] as? String ?: "",
                 timestamp = data["timestamp"] as? com.google.firebase.Timestamp
             ).also {
-                Log.d(TAG, "Parsed listing: ${it.id}, ${it.productName}, ${it.rentPrice}")
+                Log.d(TAG, "Successfully parsed listing: ${it.id}, ${it.productName}, ${it.rentPrice}")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error parsing listing ${document.id}: ", e)
+            Log.e(TAG, "Error parsing listing ${document.id}: ${e.message}", e)
             null
         }
     }

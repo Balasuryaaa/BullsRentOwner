@@ -7,12 +7,12 @@ plugins {
 
 android {
     namespace = "com.example.bullsrentowner"
-    compileSdk = 35
+    compileSdk = 34 // Changed from 35 to 34 (current latest)
 
     defaultConfig {
         applicationId = "com.example.bullsrentowner"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 34 // Changed from 35 to 34
         versionCode = 1
         versionName = "1.0"
 
@@ -30,12 +30,12 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17 // ✅ Ensures Java 17 support
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17" // ✅ Matches Java version
     }
 }
 
@@ -50,8 +50,8 @@ dependencies {
     // ✅ ViewPager Dots Indicator
     implementation("com.tbuonomo:dotsindicator:5.0")
 
-    // ✅ Firebase BoM (Bill of Materials)
-    implementation(platform("com.google.firebase:firebase-bom:33.0.0"))
+    // ✅ Firebase BoM (Updated)
+    implementation(platform("com.google.firebase:firebase-bom:32.8.0"))
 
     // ✅ Firebase Services
     implementation("com.google.firebase:firebase-auth-ktx")
@@ -59,10 +59,10 @@ dependencies {
     implementation("com.google.firebase:firebase-storage-ktx")
 
     // ✅ Google Play Services (Auth)
-    implementation("com.google.android.gms:play-services-auth:21.0.0")
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
 
     // ✅ Kotlin Coroutines (Firebase integration)
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 
     // ✅ Glide (Image Loading)
     implementation("com.github.bumptech.glide:glide:4.16.0")
