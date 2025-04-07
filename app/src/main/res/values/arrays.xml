@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="order_status_options">
+        <item>All Orders</item>
+        <item>Waiting</item>
+        <item>Success</item>
+        <item>Pending</item>
+        <item>Payment Not Done</item>
+    </string-array>
+</resources> 

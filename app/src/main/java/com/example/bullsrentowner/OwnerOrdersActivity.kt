@@ -1,131 +1,119 @@
 package com.example.bullsrentowner
 
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.*
 
-data class Order(
-    val id: String,
-    val machineName: String,
-    val status: String,
-    val companyName: String,
-    val bookingDate: Long,
-    val startDate: String = "",
-    val endDate: String = "",
-    val duration: String = "",
-    val rentType: String = "",
-    val startTime: String? = null,
-    val endTime: String? = null,
-    val totalAmount: String = ""
-)
+class OwnerOrdersActivity : BaseActivity() {
 
-class CustomerOrderManagement : BaseActivity() {
-
-    private lateinit var customerNameTextView: TextView
-    private lateinit var customerMobileTextView: TextView
-    private lateinit var customerLocationTextView: TextView
-    private lateinit var bottomNavigationView: BottomNavigationView
-    private lateinit var orderRecyclerView: RecyclerView
+    private lateinit var tvOwnerMobile: TextView
+    private lateinit var statusFilterSpinner: Spinner
+    private lateinit var recyclerViewOrders: RecyclerView
+    private lateinit var tvEmptyState: TextView
     private lateinit var orderAdapter: OrderAdapter
+    
     private val db = FirebaseFirestore.getInstance()
-
-    private var customerMobile: String? = null
+    private var ownerPhone: String? = null
+    private var currentFilter: String = "All Orders"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_customer_ordermanagment)
+        setContentView(R.layout.activity_owner_orders)
 
+        // Initialize views
         initViews()
-
-        customerMobile = getSharedPreferences("CustomerProfile", MODE_PRIVATE)
-            .getString("mobile", null)
-
-        if (!customerMobile.isNullOrEmpty()) {
-            fetchCustomerDetails(customerMobile!!)
-            setupRecyclerView()
-            fetchAllOrders()
-        } else {
-            showToast("No Mobile Number Found!")
+        
+        // Get owner phone from intent
+        ownerPhone = intent.getStringExtra("USER_PHONE")
+        
+        if (ownerPhone.isNullOrEmpty()) {
+            showToast("No phone number provided!")
+            finish()
+            return
         }
-
-        bottomNavigationView.selectedItemId = R.id.navigation_orders
-        setupBottomNavigation()
+        
+        // Setup owner info
+        tvOwnerMobile.text = "Mobile: $ownerPhone"
+        
+        // Setup status filter spinner
+        setupStatusFilter()
+        
+        // Setup recycler view
+        setupRecyclerView()
+        
+        // Fetch orders
+        fetchOrders(null)
     }
-
+    
     private fun initViews() {
-        customerNameTextView = findViewById(R.id.tvCustomerName)
-        customerMobileTextView = findViewById(R.id.tvCustomerMobile)
-        customerLocationTextView = findViewById(R.id.tvCustomerLocation)
-        bottomNavigationView = findViewById(R.id.bottomNavBar)
-        orderRecyclerView = findViewById(R.id.recyclerViewOrders)
+        tvOwnerMobile = findViewById(R.id.tvOwnerMobile)
+        statusFilterSpinner = findViewById(R.id.statusFilterSpinner)
+        recyclerViewOrders = findViewById(R.id.recyclerViewOrders)
+        tvEmptyState = findViewById(R.id.tvEmptyState)
     }
-
-    private fun setupRecyclerView() {
-        orderRecyclerView.layoutManager = LinearLayoutManager(this)
-        orderAdapter = OrderAdapter(emptyList())
-        orderRecyclerView.adapter = orderAdapter
-    }
-
-    private fun setupBottomNavigation() {
-        bottomNavigationView.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.navigation_listings -> {
-                    navigateTo(AllListingsActivity::class.java)
-                    true
-                }
-                R.id.navigation_orders -> true
-                R.id.navigation_settings -> {
-                    navigateTo(customer_settings::class.java)
-                    true
-                }
-                R.id.navigation_profile -> {
-                    navigateTo(customer_profile::class.java)
-                    true
-                }
-                else -> false
+    
+    private fun setupStatusFilter() {
+        val statusOptions = resources.getStringArray(R.array.order_status_options)
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, statusOptions)
+        statusFilterSpinner.adapter = adapter
+        
+        statusFilterSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                val selectedStatus = statusOptions[position]
+                currentFilter = selectedStatus
+                
+                // Filter is "All Orders" or a specific status
+                val statusFilter = if (selectedStatus == "All Orders") null else selectedStatus
+                fetchOrders(statusFilter)
+            }
+            
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                // Do nothing
             }
         }
     }
-
-    private fun navigateTo(destination: Class<*>) {
-        startActivity(Intent(this, destination))
+    
+    private fun setupRecyclerView() {
+        recyclerViewOrders.layoutManager = LinearLayoutManager(this)
+        orderAdapter = OrderAdapter(emptyList())
+        recyclerViewOrders.adapter = orderAdapter
     }
-
-    private fun fetchCustomerDetails(mobile: String) {
-        db.collection("customers").document(mobile).get()
-            .addOnSuccessListener { document ->
-                if (document.exists()) {
-                    customerNameTextView.text = "Name: ${document.getString("name") ?: "N/A"}"
-                    customerMobileTextView.text = "Mobile: $mobile"
-                    customerLocationTextView.text = "Location: ${document.getString("location") ?: "N/A"}"
-                } else {
-                    showToast("Customer not found in database!")
-                }
-            }
-            .addOnFailureListener { e ->
-                logError("Error fetching customer data", e)
-                showToast("Error loading customer data.")
-            }
-    }
-
-    private fun fetchAllOrders() {
-        customerMobile?.let { mobile ->
-            Log.d(TAG, "Fetching orders for customer: $mobile")
+    
+    private fun fetchOrders(statusFilter: String?) {
+        ownerPhone?.let { phone ->
+            Log.d(TAG, "Fetching orders for owner: $phone, filter: $statusFilter")
             
-            db.collection("bookings")
-                .whereEqualTo("customerPhone", mobile)
-                .get()
+            val query = db.collection("bookings")
+                .whereEqualTo("ownerPhone", phone)
+            
+            // Apply status filter if specified
+            val filteredQuery = if (statusFilter != null) {
+                query.whereEqualTo("status", statusFilter.lowercase())
+            } else {
+                query
+            }
+            
+            filteredQuery.get()
                 .addOnSuccessListener { documents ->
                     Log.d(TAG, "Query executed successfully. Found ${documents.size()} documents")
                     val ordersList = mutableListOf<Order>()
+                    
+                    if (documents.isEmpty) {
+                        showEmptyState()
+                        return@addOnSuccessListener
+                    }
+                    
+                    hideEmptyState()
                     
                     for (document in documents) {
                         try {
@@ -146,6 +134,10 @@ class CustomerOrderManagement : BaseActivity() {
                                 System.currentTimeMillis()
                             }
 
+                            // Get the customer information
+                            val customerPhone = data["customerPhone"] as? String ?: "Unknown"
+                            
+                            // Look up the product name from the listing ID
                             val listingId = data["listingId"] as? String
                             
                             if (listingId != null) {
@@ -153,7 +145,7 @@ class CustomerOrderManagement : BaseActivity() {
                                     id = document.id,
                                     machineName = data["productName"] as? String ?: "Loading...",
                                     status = data["status"] as? String ?: "Unknown",
-                                    companyName = "Owner: " + (data["ownerPhone"] as? String ?: "N/A"),
+                                    companyName = "Customer: $customerPhone",
                                     bookingDate = bookingDate,
                                     startDate = data["startDate"] as? String ?: "",
                                     endDate = data["endDate"] as? String ?: "",
@@ -168,7 +160,7 @@ class CustomerOrderManagement : BaseActivity() {
                                     orderAdapter.updateOrders(ordersList.sortedByDescending { it.bookingDate })
                                 }
                                 
-                                // Fetch additional listing details
+                                // Fetch product and listing details
                                 db.collection("listings").document(listingId)
                                     .get()
                                     .addOnSuccessListener { listingDoc ->
@@ -183,16 +175,26 @@ class CustomerOrderManagement : BaseActivity() {
                                                 data["rentType"] as? String ?: ""
                                             )
                                             
-                                            val index = ordersList.indexOfFirst { it.id == document.id }
-                                            if (index >= 0) {
-                                                val updatedOrder = ordersList[index].copy(
-                                                    machineName = productName,
-                                                    companyName = "Owner: " + (listingDoc.getString("ownerName") ?: "N/A"),
-                                                    totalAmount = totalAmount
-                                                )
-                                                ordersList[index] = updatedOrder
-                                                orderAdapter.updateOrders(ordersList.sortedByDescending { it.bookingDate })
-                                            }
+                                            // Fetch customer name
+                                            db.collection("customers")
+                                                .document(customerPhone)
+                                                .get()
+                                                .addOnSuccessListener { customerDoc ->
+                                                    val customerName = if (customerDoc.exists()) {
+                                                        customerDoc.getString("name") ?: "Unknown"
+                                                    } else "Unknown"
+                                                    
+                                                    val index = ordersList.indexOfFirst { it.id == document.id }
+                                                    if (index >= 0) {
+                                                        val updatedOrder = ordersList[index].copy(
+                                                            machineName = productName,
+                                                            companyName = "Customer: $customerName ($customerPhone)",
+                                                            totalAmount = totalAmount
+                                                        )
+                                                        ordersList[index] = updatedOrder
+                                                        orderAdapter.updateOrders(ordersList.sortedByDescending { it.bookingDate })
+                                                    }
+                                                }
                                         }
                                     }
                                     .addOnFailureListener { e ->
@@ -203,7 +205,7 @@ class CustomerOrderManagement : BaseActivity() {
                                     id = document.id,
                                     machineName = "Unknown Product",
                                     status = data["status"] as? String ?: "Unknown",
-                                    companyName = "Owner: " + (data["ownerPhone"] as? String ?: "N/A"),
+                                    companyName = "Customer: $customerPhone",
                                     bookingDate = bookingDate,
                                     startDate = data["startDate"] as? String ?: "",
                                     endDate = data["endDate"] as? String ?: "",
@@ -218,18 +220,15 @@ class CustomerOrderManagement : BaseActivity() {
                             Log.e(TAG, "Error processing order document: ${e.message}", e)
                         }
                     }
-                    
-                    if (ordersList.isEmpty()) {
-                        showToast("No orders found")
-                    }
                 }
                 .addOnFailureListener { e ->
                     Log.e(TAG, "Error fetching orders: ${e.message}", e)
                     showToast("Error loading orders: ${e.message}")
+                    showEmptyState()
                 }
         }
     }
-
+    
     private fun calculateTotalAmount(rentPrice: String, duration: String, rentType: String): String {
         return try {
             val price = rentPrice.toDouble()
@@ -241,42 +240,26 @@ class CustomerOrderManagement : BaseActivity() {
             "₹0.00"
         }
     }
-
-    private fun formatBookingPeriod(order: Order): String {
-        val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-        val startDate = try {
-            val parsedDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(order.startDate)
-            dateFormat.format(parsedDate!!)
-        } catch (e: Exception) {
-            order.startDate
-        }
-
-        return when {
-            order.rentType.contains("hour") && order.startTime != null -> {
-                "Booked for ${order.duration} hours on $startDate\nTime: ${order.startTime} - ${order.endTime}"
-            }
-            order.rentType.contains("day") -> {
-                val endDate = try {
-                    val parsedDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(order.endDate)
-                    dateFormat.format(parsedDate!!)
-                } catch (e: Exception) {
-                    order.endDate
-                }
-                "Booked for ${order.duration} days\nFrom: $startDate\nTo: $endDate"
-            }
-            else -> "Booking period not specified"
+    
+    private fun showEmptyState() {
+        recyclerViewOrders.visibility = View.GONE
+        tvEmptyState.visibility = View.VISIBLE
+        tvEmptyState.text = when (currentFilter) {
+            "All Orders" -> "No orders found"
+            else -> "No ${currentFilter.lowercase()} orders found"
         }
     }
-
+    
+    private fun hideEmptyState() {
+        recyclerViewOrders.visibility = View.VISIBLE
+        tvEmptyState.visibility = View.GONE
+    }
+    
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
-
-    private fun logError(message: String, e: Exception) {
-        Log.e("Firestore", message, e)
-    }
-
+    
     companion object {
-        private const val TAG = "CustomerOrderManagement"
+        private const val TAG = "OwnerOrdersActivity"
     }
-}
+} 

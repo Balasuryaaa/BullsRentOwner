@@ -31,6 +31,16 @@
             android:textStyle="bold"
             android:paddingTop="8dp"
             android:textColor="@android:color/black" />
+            
+        <!-- Equipment Type -->
+        <TextView
+            android:id="@+id/tvAllEquipmentType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Equipment Type"
+            android:textSize="14sp"
+            android:textColor="@android:color/holo_blue_dark"
+            android:paddingTop="2dp" />
 
         <LinearLayout
             android:layout_width="match_parent"

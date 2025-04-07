@@ -1,6 +1,15 @@
 <resources>
     <string name="app_name">BullsRent Owner</string>
     <string name="select_district">Select District</string>
+    <string-array name="equipment_types">
+        <item>Tractors</item>
+        <item>Earthmoving Equipment</item>
+        <item>Harvesting Machinery</item>
+        <item>Planting &amp; Seeding Equipment</item>
+        <item>Irrigation Equipment (Movable Vehicles)</item>
+        <item>Utility &amp; Transport Vehicles</item>
+        <item>Livestock Handling Equipment (Movable)</item>
+    </string-array>
     <string-array name="rent_types">
         <item>Per Hour</item>
         <item>Per Day</item>

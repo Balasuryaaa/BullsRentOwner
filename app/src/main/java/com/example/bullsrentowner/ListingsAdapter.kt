@@ -13,96 +13,57 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import android.app.AlertDialog
 import android.view.animation.AnimationUtils
+import android.widget.Button
+import androidx.viewpager2.widget.ViewPager2
 
 class ListingsAdapter(
     private val context: Context,
     private var listings: MutableList<Listing>,
-    private val onDeleteClick: (Listing) -> Unit
+    private val onDeleteClick: (Listing) -> Unit,
+    private val onEditClick: (Listing) -> Unit
 ) : RecyclerView.Adapter<ListingsAdapter.ViewHolder>() {
 
     private var fullListings: MutableList<Listing> = ArrayList(listings) // Copy for filtering
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val tvListingName: TextView = view.findViewById(R.id.tvListingName)
-        val tvRentPrice: TextView = view.findViewById(R.id.tvRentPrice)
-        val tvRentType: TextView = view.findViewById(R.id.tvRentType)
-        val ivListingImage: ImageView = view.findViewById(R.id.ivListingImage)
-        val ivDelete: ImageButton = view.findViewById(R.id.ivDelete)
-        val extraDetailsLayout: View = view.findViewById(R.id.extraDetailsLayout)
-        val tvDescription: TextView = view.findViewById(R.id.tvDescription)
-        val tvOwnerName: TextView = view.findViewById(R.id.tvOwnerName)
+        val productName: TextView = view.findViewById(R.id.tvProductName)
+        val rentPrice: TextView = view.findViewById(R.id.tvRentPrice)
+        val rentType: TextView = view.findViewById(R.id.tvRentType)
+        val description: TextView = view.findViewById(R.id.tvDescription)
+        val location: TextView = view.findViewById(R.id.tvLocation)
+        val viewPagerImages: ViewPager2 = view.findViewById(R.id.viewPagerImages)
+        val btnEdit: Button = view.findViewById(R.id.btnEdit)
+        val btnDelete: Button = view.findViewById(R.id.btnDelete)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_listing, parent, false)
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_listing, parent, false)
         return ViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val listing = listings[position]
+        
+        holder.productName.text = listing.productName
+        holder.rentPrice.text = "₹${listing.rentPrice}"
+        holder.rentType.text = listing.rentType
+        holder.description.text = listing.description
+        holder.location.text = "📍 ${listing.location}"
 
-        // Set text values
-        holder.tvListingName.text = listing.productName
-        holder.tvRentPrice.text = "₹${listing.rentPrice}"
-        holder.tvRentType.text = "/ ${listing.rentType}"
-        holder.tvDescription.text = listing.description
-        holder.tvOwnerName.text = "Owner: ${listing.ownerName}"
+        // Setup image slider
+        val imageAdapter = ImagePagerAdapter(listing.imageBase64)
+        holder.viewPagerImages.adapter = imageAdapter
 
-        // Load Image (Glide for URL, Base64 fallback)
-        if (listing.imageUrls.isNotEmpty()) {
-            Glide.with(context)
-                .load(listing.imageUrls[0])
-                .placeholder(R.drawable.placeholder_image)
-                .error(R.drawable.placeholder_image)
-                .into(holder.ivListingImage)
-        } else if (listing.imageBase64.isNotEmpty()) {
-            try {
-                val imageBytes = Base64.decode(listing.imageBase64[0], Base64.DEFAULT)
-                val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                holder.ivListingImage.setImageBitmap(bitmap)
-            } catch (e: Exception) {
-                holder.ivListingImage.setImageResource(R.drawable.placeholder_image)
-            }
-        } else {
-            holder.ivListingImage.setImageResource(R.drawable.placeholder_image)
-        }
-
-        // **Toggle More Info (Animated Expand/Collapse)**
-        holder.itemView.setOnClickListener {
-            val expandAnim = AnimationUtils.loadAnimation(context, R.anim.expand)
-            val collapseAnim = AnimationUtils.loadAnimation(context, R.anim.collapse)
-
-            if (holder.extraDetailsLayout.visibility == View.VISIBLE) {
-                holder.extraDetailsLayout.startAnimation(collapseAnim)
-                holder.extraDetailsLayout.visibility = View.GONE
-            } else {
-                holder.extraDetailsLayout.startAnimation(expandAnim)
-                holder.extraDetailsLayout.visibility = View.VISIBLE
-            }
-        }
-
-        // **Delete Confirmation Dialog**
-        holder.ivDelete.setOnClickListener {
-            AlertDialog.Builder(context)
-                .setTitle("Delete Listing")
-                .setMessage("Are you sure you want to delete '${listing.productName}'?")
-                .setPositiveButton("Delete") { _, _ ->
-                    onDeleteClick(listing)
-                    removeListing(position)
-                }
-                .setNegativeButton("Cancel", null)
-                .show()
+        // Setup buttons
+        holder.btnEdit.setOnClickListener { onEditClick(listing) }
+        holder.btnDelete.setOnClickListener { 
+            onDeleteClick(listing)
+            notifyItemRemoved(position)
         }
     }
 
     override fun getItemCount() = listings.size
-
-    /** Remove listing and update RecyclerView **/
-    private fun removeListing(position: Int) {
-        listings.removeAt(position)
-        notifyItemRemoved(position)
-        notifyItemRangeChanged(position, listings.size)
-    }
 
     /** **🔍 Filter Listings (Search by Name & Sort by Price)** **/
     fun filterListings(query: String, sortAscending: Boolean?) {
@@ -120,10 +81,17 @@ class ListingsAdapter(
 
         notifyDataSetChanged()
     }
-    fun updateList(newList: List<Listing>) {
+    fun updateListings(newListings: List<Listing>) {
         listings.clear()
-        listings.addAll(newList)
+        listings.addAll(newListings)
         notifyDataSetChanged()
     }
 
+    fun removeListing(position: Int) {
+        if (position in 0 until listings.size) {
+            listings.removeAt(position)
+            notifyItemRemoved(position)
+            notifyItemRangeChanged(position, listings.size)
+        }
+    }
 }

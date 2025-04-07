@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@color/background_color">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="16dp">
+        
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Filters"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary_color" />
+            
+        <Button
+            android:id="@+id/btnApplyFilters"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Apply"
+            android:textColor="@color/accent_color"
+            android:background="@color/primary_color"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp" />
+    </LinearLayout>
+
+    <!-- Filter - Equipment Type -->
+    <TextView
+        android:id="@+id/tvEquipmentTypeLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Equipment Type:"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_secondary_color"
+        android:layout_marginTop="12dp" />
+
+    <Spinner
+        android:id="@+id/spinnerEquipmentType"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/spinner_background"
+        android:padding="8dp"
+        android:elevation="2dp" />
+        
+    <!-- Filter - Rent Type -->
+    <TextView
+        android:id="@+id/tvRentTypeLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Rent Type:"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_secondary_color"
+        android:layout_marginTop="12dp" />
+
+    <Spinner
+        android:id="@+id/spinnerRentType"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/spinner_background"
+        android:padding="8dp"
+        android:elevation="2dp" />
+
+    <!-- Filter - Sort By -->
+    <TextView
+        android:id="@+id/tvSortLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Sort By:"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_secondary_color"
+        android:layout_marginTop="12dp" />
+        
+    <Spinner
+        android:id="@+id/spinnerSort"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/spinner_background"
+        android:padding="8dp"
+        android:elevation="2dp" />
+        
+    <!-- Bottom padding for better UI -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="16dp" />
+</LinearLayout> 

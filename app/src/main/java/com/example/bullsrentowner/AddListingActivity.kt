@@ -23,6 +23,7 @@ class AddListingActivity : AppCompatActivity() {
     private lateinit var etProductName: EditText
     private lateinit var etRentPrice: EditText
     private lateinit var etDescription: EditText
+    private lateinit var spinnerEquipmentType: Spinner
     private lateinit var spinnerRentType: Spinner
     private lateinit var btnSelectImages: Button
     private lateinit var btnUploadListing: Button
@@ -67,6 +68,7 @@ class AddListingActivity : AppCompatActivity() {
         etProductName = findViewById(R.id.etProductName)
         etRentPrice = findViewById(R.id.etRentPrice)
         etDescription = findViewById(R.id.etDescription)
+        spinnerEquipmentType = findViewById(R.id.spinnerEquipmentType)
         spinnerRentType = findViewById(R.id.spinnerRentType)
         btnSelectImages = findViewById(R.id.btnSelectImages)
         btnUploadListing = findViewById(R.id.btnUploadListing)
@@ -92,6 +94,15 @@ class AddListingActivity : AppCompatActivity() {
         btnSelectImages.setOnClickListener { openGallery() }
         btnUploadListing.setOnClickListener { uploadListing() }
 
+        // Setup Equipment Type Spinner
+        ArrayAdapter.createFromResource(
+            this, R.array.equipment_types, android.R.layout.simple_spinner_item
+        ).also { adapter ->
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            spinnerEquipmentType.adapter = adapter
+        }
+
+        // Setup Rent Type Spinner
         ArrayAdapter.createFromResource(
             this, R.array.rent_types, android.R.layout.simple_spinner_item
         ).also { adapter ->
@@ -206,6 +217,7 @@ class AddListingActivity : AppCompatActivity() {
         val productName = etProductName.text.toString().trim()
         val rentPrice = etRentPrice.text.toString().trim()
         val description = etDescription.text.toString().trim()
+        val equipmentType = spinnerEquipmentType.selectedItem.toString()
         val rentType = spinnerRentType.selectedItem.toString()
 
         if (productName.isEmpty() || rentPrice.isEmpty() || description.isEmpty()) {
@@ -220,6 +232,7 @@ class AddListingActivity : AppCompatActivity() {
             "listingId" to listingId,
             "productName" to productName,
             "rentType" to rentType,
+            "equipmentType" to equipmentType,
             "rentPrice" to rentPrice,
             "description" to description,
             "imageBase64" to base64Images,

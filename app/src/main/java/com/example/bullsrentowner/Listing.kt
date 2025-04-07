@@ -7,6 +7,7 @@ data class Listing(
     var id: String = "",
     val productName: String = "",
     val rentType: String = "",
+    val equipmentType: String = "",
     val rentPrice: Double = 0.0, // Changed from nullable to avoid null checks
     val description: String = "",
     val imageUrls: List<String> = emptyList(), // Firebase image URLs
@@ -24,6 +25,8 @@ data class Listing(
         if (id.isEmpty()) errors.add("❌ Listing ID is missing.")
         if (productName.trim().isEmpty()) errors.add("❌ Product Name is missing.")
         if (rentType.trim().isEmpty()) errors.add("❌ Rent Type is missing.")
+        // Make equipment type validation optional for backward compatibility
+        // if (equipmentType.trim().isEmpty()) errors.add("❌ Equipment Type is missing.")
         if (rentPrice <= 0) errors.add("❌ Rent Price must be greater than zero.")
         if (location.trim().isEmpty()) errors.add("❌ Location is missing.")
         if (ownerPhone.trim().isEmpty()) errors.add("❌ Owner Phone is missing.")
@@ -38,7 +41,7 @@ data class Listing(
     }
 
     override fun toString(): String {
-        return "Listing(id='$id', productName='$productName', rentType='$rentType', rentPrice=$rentPrice, " +
+        return "Listing(id='$id', productName='$productName', equipmentType='$equipmentType', rentType='$rentType', rentPrice=$rentPrice, " +
                 "location='$location', ownerName='$ownerName', ownerPhone='$ownerPhone', timestamp=$timestamp)"
     }
 }

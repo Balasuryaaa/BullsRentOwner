@@ -24,6 +24,7 @@ class AllListingsAdapter(
         val tvAllListingName: TextView = view.findViewById(R.id.tvAllListingName)
         val tvAllRentPrice: TextView = view.findViewById(R.id.tvAllRentPrice)
         val tvAllRentType: TextView = view.findViewById(R.id.tvAllRentType)
+        val tvAllEquipmentType: TextView = view.findViewById(R.id.tvAllEquipmentType)
         val ivAllListingImage: ImageView = view.findViewById(R.id.ivAllListingImage)
     }
 
@@ -39,6 +40,7 @@ class AllListingsAdapter(
         holder.tvAllListingName.text = listing.productName ?: "Unknown"
         holder.tvAllRentPrice.text = "₹${listing.rentPrice ?: "0"}"
         holder.tvAllRentType.text = "/ ${listing.rentType ?: "N/A"}"
+        holder.tvAllEquipmentType.text = listing.equipmentType ?: "N/A"
 
         // Load image (URL or Base64)
         loadListingImage(holder.ivAllListingImage, listing)

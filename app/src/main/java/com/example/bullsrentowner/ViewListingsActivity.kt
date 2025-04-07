@@ -1,11 +1,14 @@
 package com.example.bullsrentowner
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -24,6 +27,15 @@ class ViewListingsActivity : AppCompatActivity() {
 
     private var userPhone: String? = null
     private val listings = mutableListOf<Listing>()
+
+    private val editListingLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            // Refresh listings after edit
+            fetchUserListings()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,9 +64,12 @@ class ViewListingsActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        listingsAdapter = ListingsAdapter(this, listings) { listing ->
-            deleteListing(listing.id)
-        }
+        listingsAdapter = ListingsAdapter(
+            this,
+            listings,
+            onDeleteClick = { listing -> deleteListing(listing.id) },
+            onEditClick = { listing -> editListing(listing) }
+        )
         rvListings.layoutManager = LinearLayoutManager(this)
         rvListings.adapter = listingsAdapter
     }
@@ -113,6 +128,13 @@ class ViewListingsActivity : AppCompatActivity() {
                 Log.e(TAG, "Error deleting listing: ", e)
                 showToast("Failed to delete listing")
             }
+    }
+
+    private fun editListing(listing: Listing) {
+        val intent = Intent(this, EditListingActivity::class.java).apply {
+            putExtra("LISTING_ID", listing.id)
+        }
+        editListingLauncher.launch(intent)
     }
 
     private fun parseListing(document: QueryDocumentSnapshot): Listing? {

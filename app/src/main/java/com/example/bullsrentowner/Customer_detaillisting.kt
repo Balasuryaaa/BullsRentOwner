@@ -29,6 +29,7 @@ class Customer_detaillisting : BaseActivity() {
     private lateinit var viewPagerImages: ViewPager2
     private lateinit var btnContactCustomer: Button
     private lateinit var btnMakeBooking: Button
+    private lateinit var tvAvailability: TextView
 
     private var listingId: String? = null
     private lateinit var sharedPreferences: SharedPreferences
@@ -50,6 +51,7 @@ class Customer_detaillisting : BaseActivity() {
         viewPagerImages = findViewById(R.id.viewPagerImages)
         btnContactCustomer = findViewById(R.id.btnContactCustomer)
         btnMakeBooking = findViewById(R.id.btnMakeBooking)
+        tvAvailability = findViewById(R.id.tvAvailability)
 
         // SharedPreferences to get Customer Mobile Number
         sharedPreferences = getSharedPreferences("CustomerProfile", MODE_PRIVATE)
@@ -84,33 +86,9 @@ class Customer_detaillisting : BaseActivity() {
         // Make Booking with rent duration
         btnMakeBooking.setOnClickListener {
             val rentTypeText = rentType.text.toString().lowercase()
-
-            val builder = AlertDialog.Builder(this)
-            builder.setTitle("Enter Duration")
-
-            val input = EditText(this)
-            input.inputType = InputType.TYPE_CLASS_NUMBER
-            builder.setView(input)
-
-            when {
-                rentTypeText.contains("hour") -> builder.setMessage("Enter the number of hours:")
-                rentTypeText.contains("day") -> builder.setMessage("Enter the number of days:")
-                else -> {
-                    Toast.makeText(this, "Invalid rent type!", Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
-                }
-            }
-
-            builder.setPositiveButton("Confirm") { _, _ ->
-                val duration = input.text.toString().trim()
-                if (duration.isEmpty() || duration.toIntOrNull() == null || duration.toInt() <= 0) {
-                    Toast.makeText(this, "Invalid duration!", Toast.LENGTH_SHORT).show()
-                } else {
-                    confirmBooking(customerMobile, duration, rentTypeText)
-                }
-            }
-            builder.setNegativeButton("Cancel", null)
-            builder.show()
+            
+            // First ask for booking date
+            showDateSelectionDialog(rentTypeText)
         }
     }
 
@@ -173,61 +151,407 @@ class Customer_detaillisting : BaseActivity() {
     }
 
     private fun showListing(listing: ListingCustomer) {
+        // Set basic listing details with proper formatting
         productName.text = listing.productName ?: "N/A"
-        rentType.text = listing.rentType ?: "N/A"
-        rentPrice.text = if (listing.rentPrice != null) "₹${listing.rentPrice} / ${listing.rentType}" else "N/A"
-        description.text = listing.description ?: "N/A"
-        location.text = listing.location ?: "N/A"
-        ownerName.text = listing.ownerName ?: "N/A"
-        ownerPhone.text = listing.ownerPhone ?: "N/A"
+        
+        // Format rent type and price with better presentation
+        val formattedRentType = listing.rentType?.capitalize() ?: "N/A"
+        rentType.text = "Rent Basis: $formattedRentType"
+        
+        // Format price with currency and rent basis
+        rentPrice.text = when {
+            !listing.rentPrice.isNullOrEmpty() -> {
+                val price = listing.rentPrice!!  // Safe call since we checked for null
+                val basis = listing.rentType?.lowercase() ?: ""
+                when {
+                    basis.contains("hour") -> "₹$price per hour"
+                    basis.contains("day") -> "₹$price per day"
+                    else -> "₹$price"
+                }
+            }
+            else -> "Price not available"
+        }
 
+        // Format description with proper sections
+        val descriptionText = buildString {
+            append("Description:\n")
+            append(listing.description ?: "No description available")
+            append("\n\nLocation: ")
+            append(listing.location ?: "Location not specified")
+        }
+        description.text = descriptionText
+
+        // Format location for better visibility
+        location.text = "📍 ${listing.location ?: "Location not available"}"
+
+        // Format owner details with proper labels
+        ownerName.text = "Owner: ${listing.ownerName ?: "N/A"}"
+        ownerPhone.text = "Contact: ${listing.ownerPhone ?: "N/A"}"
+
+        // Set up image slider
         val imageItems = mutableListOf<Any>()
-        listing.imageUrls?.let { imageItems.addAll(it.filter { it.isNotEmpty() }) }
-        listing.imageBase64?.mapNotNullTo(imageItems) { base64StringToBitmap(it) }
+        
+        // Add URLs first if available
+        listing.imageUrls?.let { urls ->
+            imageItems.addAll(urls.filter { it.isNotEmpty() })
+        }
+        
+        // Add Base64 images if available
+        listing.imageBase64?.forEach { base64String ->
+            base64StringToBitmap(base64String)?.let {
+                imageItems.add(it)
+            }
+        }
 
-        viewPagerImages.adapter = ImagePagerAdapter(imageItems)
+        // Set up ViewPager with images
+        if (imageItems.isNotEmpty()) {
+            viewPagerImages.adapter = ImagePagerAdapter(imageItems)
+            viewPagerImages.visibility = android.view.View.VISIBLE
+        } else {
+            viewPagerImages.visibility = android.view.View.GONE
+            // Show a placeholder or message when no images are available
+            Toast.makeText(this, "No images available for this listing", Toast.LENGTH_SHORT).show()
+        }
+
+        // Update button states and labels
+        btnContactCustomer.text = "Contact Owner"
+        btnContactCustomer.isEnabled = !listing.ownerPhone.isNullOrEmpty()
+        
+        btnMakeBooking.text = "Book Now"
+        btnMakeBooking.isEnabled = true
+
+        // Show availability status
+        checkCurrentAvailability(listing)
+    }
+
+    private fun checkCurrentAvailability(listing: ListingCustomer) {
+        val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        
+        firestore.collection("bookings")
+            .whereEqualTo("listingId", listingId)
+            .whereIn("status", listOf("approved", "pending"))
+            .whereGreaterThanOrEqualTo("endDate", currentDate)
+            .get()
+            .addOnSuccessListener { bookings ->
+                if (bookings.isEmpty) {
+                    tvAvailability.text = "✅ Currently Available"
+                    tvAvailability.setTextColor(getColor(android.R.color.holo_green_dark))
+                } else {
+                    // Check if there are any current bookings
+                    val currentBookings = bookings.documents.filter { doc ->
+                        val startDate = doc.getString("startDate") ?: ""
+                        val endDate = doc.getString("endDate") ?: ""
+                        currentDate in startDate..endDate
+                    }
+                    
+                    if (currentBookings.isNotEmpty()) {
+                        tvAvailability.text = "🔴 Currently Booked"
+                        tvAvailability.setTextColor(getColor(android.R.color.holo_red_dark))
+                    } else {
+                        tvAvailability.text = "✅ Currently Available"
+                        tvAvailability.setTextColor(getColor(android.R.color.holo_green_dark))
+                    }
+                }
+                tvAvailability.visibility = android.view.View.VISIBLE
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Error checking availability: ${e.message}")
+            }
     }
 
     private fun showNotFound() {
-        Toast.makeText(this, "Listing not found! It may have been removed.", Toast.LENGTH_SHORT).show()
-        finish()
+        val errorMessage = "This listing is no longer available. It may have been removed or deactivated by the owner."
+        AlertDialog.Builder(this)
+            .setTitle("Listing Not Found")
+            .setMessage(errorMessage)
+            .setPositiveButton("OK") { _, _ -> finish() }
+            .setCancelable(false)
+            .show()
     }
 
-    private fun confirmBooking(customerPhone: String, duration: String, rentType: String) {
+    private fun showDateSelectionDialog(rentTypeText: String) {
+        // Create DatePicker dialog
+        val calendar = Calendar.getInstance()
+        val year = calendar.get(Calendar.YEAR)
+        val month = calendar.get(Calendar.MONTH)
+        val day = calendar.get(Calendar.DAY_OF_MONTH)
+        
+        val datePickerDialog = android.app.DatePickerDialog(
+            this,
+            { _, selectedYear, selectedMonth, selectedDay ->
+                // Format the selected date
+                calendar.set(selectedYear, selectedMonth, selectedDay)
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val selectedDate = dateFormat.format(calendar.time)
+                
+                // Now show duration dialog
+                showDurationDialog(rentTypeText, selectedDate)
+            },
+            year, month, day
+        )
+        
+        // Set minimum date to today
+        datePickerDialog.datePicker.minDate = System.currentTimeMillis() - 1000
+        datePickerDialog.setTitle("Select Booking Start Date")
+        datePickerDialog.show()
+    }
+
+    private fun showDurationDialog(rentTypeText: String, startDate: String) {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Enter Duration")
+
+        val input = EditText(this)
+        input.inputType = InputType.TYPE_CLASS_NUMBER
+        builder.setView(input)
+
+        when {
+            rentTypeText.contains("hour") -> builder.setMessage("Enter the number of hours:")
+            rentTypeText.contains("day") -> builder.setMessage("Enter the number of days:")
+            else -> {
+                Toast.makeText(this, "Invalid rent type!", Toast.LENGTH_SHORT).show()
+                return
+            }
+        }
+
+        builder.setPositiveButton("Confirm") { _, _ ->
+            val duration = input.text.toString().trim()
+            if (duration.isEmpty() || duration.toIntOrNull() == null || duration.toInt() <= 0) {
+                Toast.makeText(this, "Invalid duration!", Toast.LENGTH_SHORT).show()
+            } else {
+                if (rentTypeText.contains("hour")) {
+                    // For hourly rentals, ask for start time
+                    showTimePickerDialog(startDate, duration.toInt(), rentTypeText)
+                } else {
+                    // For daily rentals, continue with date-based booking
+                    val endDate = calculateEndDate(startDate, duration.toInt(), rentTypeText)
+                    confirmBooking(sharedPreferences.getString("mobile", "Unknown") ?: "Unknown", 
+                        duration, rentTypeText, startDate, endDate, null, null)
+                }
+            }
+        }
+        builder.setNegativeButton("Cancel", null)
+        builder.show()
+    }
+    
+    private fun showTimePickerDialog(startDate: String, durationHours: Int, rentTypeText: String) {
+        // Create TimePicker dialog
+        val calendar = Calendar.getInstance()
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+        val minute = calendar.get(Calendar.MINUTE)
+        
+        val timePickerDialog = android.app.TimePickerDialog(
+            this,
+            { _, selectedHour, selectedMinute ->
+                // Format the selected time
+                val startTimeStr = String.format("%02d:%02d", selectedHour, selectedMinute)
+                
+                // Calculate end time
+                val endTimeCalendar = Calendar.getInstance()
+                endTimeCalendar.set(Calendar.HOUR_OF_DAY, selectedHour)
+                endTimeCalendar.set(Calendar.MINUTE, selectedMinute)
+                endTimeCalendar.add(Calendar.HOUR_OF_DAY, durationHours)
+                
+                val endTimeStr = String.format("%02d:%02d", 
+                    endTimeCalendar.get(Calendar.HOUR_OF_DAY),
+                    endTimeCalendar.get(Calendar.MINUTE))
+                
+                // Check if booking spans multiple days
+                val endDate = if (endTimeCalendar.get(Calendar.HOUR_OF_DAY) < selectedHour) {
+                    // If end hour is less than start hour, it means we've moved to next day
+                    val calendar = Calendar.getInstance()
+                    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                    calendar.time = dateFormat.parse(startDate) ?: Date()
+                    calendar.add(Calendar.DAY_OF_MONTH, 1)
+                    dateFormat.format(calendar.time)
+                } else {
+                    startDate
+                }
+                
+                confirmBooking(
+                    sharedPreferences.getString("mobile", "Unknown") ?: "Unknown",
+                    durationHours.toString(), rentTypeText, startDate, endDate, startTimeStr, endTimeStr
+                )
+            },
+            hour, minute, true
+        )
+        
+        timePickerDialog.setTitle("Select Start Time")
+        timePickerDialog.show()
+    }
+    
+    private fun calculateEndDate(startDate: String, duration: Int, rentTypeText: String): String {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val calendar = Calendar.getInstance()
+        calendar.time = dateFormat.parse(startDate) ?: Date()
+        
+        when {
+            rentTypeText.contains("hour") -> {
+                // For hours, if it's same day, just store same end date
+                // Only advance the date if hours would extend to next day
+                val hoursInDay = 24
+                val daysToAdd = duration / hoursInDay
+                if (daysToAdd > 0) {
+                    calendar.add(Calendar.DAY_OF_MONTH, daysToAdd)
+                }
+            }
+            rentTypeText.contains("day") -> {
+                calendar.add(Calendar.DAY_OF_MONTH, duration)
+            }
+        }
+        
+        return dateFormat.format(calendar.time)
+    }
+
+    private fun confirmBooking(
+        customerPhone: String, 
+        duration: String, 
+        rentType: String, 
+        startDate: String, 
+        endDate: String,
+        startTime: String?,
+        endTime: String?
+    ) {
+        val bookingSummary = if (rentType.contains("hour") && startTime != null) {
+            "Do you want to book for $duration $rentType on $startDate from $startTime?"
+        } else {
+            "Do you want to book for $duration $rentType starting on $startDate?"
+        }
+        
         AlertDialog.Builder(this)
             .setTitle("Confirm Booking")
-            .setMessage("Do you want to book for $duration $rentType?")
+            .setMessage(bookingSummary)
             .setPositiveButton("Yes") { _, _ ->
-                makeBooking(customerPhone, duration, rentType)
+                makeBooking(customerPhone, duration, rentType, startDate, endDate, startTime, endTime)
             }
             .setNegativeButton("No", null)
             .show()
     }
 
-    private fun makeBooking(customerPhone: String, duration: String, rentType: String) {
+    private fun makeBooking(
+        customerPhone: String, 
+        duration: String, 
+        rentType: String,
+        startDate: String, 
+        endDate: String,
+        startTime: String?,
+        endTime: String?
+    ) {
         val ownerPhoneNumber = ownerPhone.text.toString()
-        val currentTime = SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(Date())
+        val currentTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+        val productNameText = productName.text.toString()
 
-        val bookingData = hashMapOf(
-            "listingId" to listingId,
-            "customerPhone" to customerPhone,
-            "ownerPhone" to ownerPhoneNumber,
-            "status" to "pending",
-            "bookingTime" to currentTime,
-            "duration" to duration,
-            "rentType" to rentType
-        )
+        // First check if there's a booking conflict
+        checkBookingConflicts(startDate, endDate, startTime, endTime, rentType) { hasConflict ->
+            if (hasConflict) {
+                // Show conflict message
+                AlertDialog.Builder(this)
+                    .setTitle("Booking Conflict")
+                    .setMessage("This item is already booked for the selected time period. Please contact the owner at $ownerPhoneNumber for available time slots.")
+                    .setPositiveButton("Contact Owner") { _, _ ->
+                        startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$ownerPhoneNumber")))
+                    }
+                    .setNegativeButton("Try Different Time", null)
+                    .show()
+            } else {
+                // No conflict, proceed with booking
+                val bookingData = hashMapOf(
+                    "listingId" to listingId,
+                    "productName" to productNameText,
+                    "customerPhone" to customerPhone,
+                    "ownerPhone" to ownerPhoneNumber,
+                    "status" to "pending",
+                    "bookingTime" to currentTime,
+                    "startDate" to startDate,
+                    "endDate" to endDate,
+                    "duration" to duration,
+                    "rentType" to rentType
+                )
+                
+                // Add time information for hourly bookings
+                if (rentType.contains("hour") && startTime != null && endTime != null) {
+                    bookingData["startTime"] = startTime
+                    bookingData["endTime"] = endTime
+                }
 
+                firestore.collection("bookings")
+                    .add(bookingData)
+                    .addOnSuccessListener {
+                        btnMakeBooking.text = "Booking Requested"
+                        btnMakeBooking.isEnabled = false
+                        Toast.makeText(this, "The owner has been notified. Check 'Manage Orders' for updates.", Toast.LENGTH_LONG).show()
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e(TAG, "Booking request failed: ${e.message}")
+                        Toast.makeText(this, "Failed to send booking request", Toast.LENGTH_SHORT).show()
+                    }
+            }
+        }
+    }
+
+    private fun checkBookingConflicts(
+        startDate: String,
+        endDate: String,
+        startTime: String?,
+        endTime: String?,
+        rentType: String,
+        callback: (Boolean) -> Unit
+    ) {
+        // Query Firestore for any bookings of this listing that might conflict
         firestore.collection("bookings")
-            .add(bookingData)
-            .addOnSuccessListener {
-                btnMakeBooking.text = "Booking Requested"
-                btnMakeBooking.isEnabled = false
-                Toast.makeText(this, "The owner has been notified. Check 'Manage Orders' for updates.", Toast.LENGTH_LONG).show()
+            .whereEqualTo("listingId", listingId)
+            .whereIn("status", listOf("approved", "pending"))
+            .get()
+            .addOnSuccessListener { bookings ->
+                var hasConflict = false
+                
+                for (booking in bookings) {
+                    val bookingData = booking.data
+                    val bookingStartDate = bookingData["startDate"] as? String ?: ""
+                    val bookingEndDate = bookingData["endDate"] as? String ?: ""
+                    val bookingRentType = bookingData["rentType"] as? String ?: ""
+                    val bookingStartTime = bookingData["startTime"] as? String
+                    val bookingEndTime = bookingData["endTime"] as? String
+                    
+                    // Check for date range overlap
+                    val datesOverlap = 
+                        (startDate <= bookingEndDate && endDate >= bookingStartDate)
+                    
+                    // If dates don't overlap, no conflict
+                    if (!datesOverlap) continue
+                    
+                    // For hourly rentals, check time overlap
+                    if (rentType.contains("hour") && bookingRentType.contains("hour") && 
+                        startTime != null && endTime != null && 
+                        bookingStartTime != null && bookingEndTime != null) {
+                        
+                        // If on same day, check for time overlap
+                        if (startDate == bookingStartDate && startDate == endDate && bookingStartDate == bookingEndDate) {
+                            // Check if time periods overlap
+                            val timesOverlap = 
+                                (startTime <= bookingEndTime && endTime >= bookingStartTime)
+                            
+                            if (timesOverlap) {
+                                hasConflict = true
+                                break
+                            }
+                        } else {
+                            // If multi-day hourly booking, consider it a conflict if dates overlap
+                            hasConflict = true
+                            break
+                        }
+                    } else {
+                        // For daily rentals or mixed rentals, consider it a conflict if dates overlap
+                        hasConflict = true
+                        break
+                    }
+                }
+                
+                callback(hasConflict)
             }
             .addOnFailureListener { e ->
-                Log.e(TAG, "Booking request failed: ${e.message}")
-                Toast.makeText(this, "Failed to send booking request", Toast.LENGTH_SHORT).show()
+                Log.e(TAG, "Error checking booking conflicts: ${e.message}")
+                // In case of error, assume no conflict to not block user, but log the error
+                callback(false)
             }
     }
 

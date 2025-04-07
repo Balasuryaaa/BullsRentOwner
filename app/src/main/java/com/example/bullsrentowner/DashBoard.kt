@@ -68,7 +68,7 @@ class DashBoard : AppCompatActivity() {
                     R.id.about -> showToast("About section coming soon!")
                     R.id.help -> showToast("Help & FAQs will be available soon!")
                     R.id.viewListings -> navigateTo(ViewListingsActivity::class.java)
-//                    R.id.viewOrders -> navigateTo(vieworders_owner::class.java) // 🔹 Ensured phone number is passed
+                    R.id.viewOrders -> navigateTo(OwnerOrdersActivity::class.java)
                     else -> false
                 }
                 true
