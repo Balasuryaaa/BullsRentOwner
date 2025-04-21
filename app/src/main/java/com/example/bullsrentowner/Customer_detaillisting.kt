@@ -86,7 +86,7 @@ class Customer_detaillisting : BaseActivity() {
         // Make Booking with rent duration
         btnMakeBooking.setOnClickListener {
             val rentTypeText = rentType.text.toString().lowercase()
-            
+
             // First ask for booking date
             showDateSelectionDialog(rentTypeText)
         }
@@ -205,7 +205,7 @@ class Customer_detaillisting : BaseActivity() {
 
         // Set up ViewPager with images
         if (imageItems.isNotEmpty()) {
-            viewPagerImages.adapter = ImagePagerAdapter(imageItems)
+        viewPagerImages.adapter = ImagePagerAdapter(imageItems)
             viewPagerImages.visibility = android.view.View.VISIBLE
         } else {
             viewPagerImages.visibility = android.view.View.GONE
@@ -417,142 +417,80 @@ class Customer_detaillisting : BaseActivity() {
             "Do you want to book for $duration $rentType starting on $startDate?"
         }
         
+        // Calculate total amount
+        val totalAmount = calculateTotalAmount(duration, rentType)
+        val advanceAmount = totalAmount * 0.5 // 50% advance
+        
         AlertDialog.Builder(this)
             .setTitle("Confirm Booking")
-            .setMessage(bookingSummary)
-            .setPositiveButton("Yes") { _, _ ->
-                makeBooking(customerPhone, duration, rentType, startDate, endDate, startTime, endTime)
+            .setMessage("$bookingSummary\n\nTotal Amount: ₹$totalAmount")
+            .setPositiveButton("Pay Full Amount") { _, _ ->
+                startPaymentActivity(totalAmount, customerPhone, duration, rentType, startDate, endDate, startTime, endTime, "full")
             }
-            .setNegativeButton("No", null)
+            .setNeutralButton("Pay Advance (50%)") { _, _ ->
+                startPaymentActivity(advanceAmount, customerPhone, duration, rentType, startDate, endDate, startTime, endTime, "advance")
+            }
+            .setNegativeButton("Cancel", null)
             .show()
     }
 
-    private fun makeBooking(
-        customerPhone: String, 
-        duration: String, 
-        rentType: String,
-        startDate: String, 
-        endDate: String,
-        startTime: String?,
-        endTime: String?
-    ) {
-        val ownerPhoneNumber = ownerPhone.text.toString()
-        val currentTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-        val productNameText = productName.text.toString()
-
-        // First check if there's a booking conflict
-        checkBookingConflicts(startDate, endDate, startTime, endTime, rentType) { hasConflict ->
-            if (hasConflict) {
-                // Show conflict message
-                AlertDialog.Builder(this)
-                    .setTitle("Booking Conflict")
-                    .setMessage("This item is already booked for the selected time period. Please contact the owner at $ownerPhoneNumber for available time slots.")
-                    .setPositiveButton("Contact Owner") { _, _ ->
-                        startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$ownerPhoneNumber")))
-                    }
-                    .setNegativeButton("Try Different Time", null)
-                    .show()
-            } else {
-                // No conflict, proceed with booking
-                val bookingData = hashMapOf(
-                    "listingId" to listingId,
-                    "productName" to productNameText,
-                    "customerPhone" to customerPhone,
-                    "ownerPhone" to ownerPhoneNumber,
-                    "status" to "pending",
-                    "bookingTime" to currentTime,
-                    "startDate" to startDate,
-                    "endDate" to endDate,
-                    "duration" to duration,
-                    "rentType" to rentType
-                )
-                
-                // Add time information for hourly bookings
-                if (rentType.contains("hour") && startTime != null && endTime != null) {
-                    bookingData["startTime"] = startTime
-                    bookingData["endTime"] = endTime
-                }
-
-                firestore.collection("bookings")
-                    .add(bookingData)
-                    .addOnSuccessListener {
-                        btnMakeBooking.text = "Booking Requested"
-                        btnMakeBooking.isEnabled = false
-                        Toast.makeText(this, "The owner has been notified. Check 'Manage Orders' for updates.", Toast.LENGTH_LONG).show()
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e(TAG, "Booking request failed: ${e.message}")
-                        Toast.makeText(this, "Failed to send booking request", Toast.LENGTH_SHORT).show()
-                    }
-            }
+    private fun calculateTotalAmount(duration: String, rentType: String): Double {
+        val priceText = rentPrice.text.toString()
+        val price = priceText.replace("₹", "").replace(" per hour", "").replace(" per day", "").trim().toDoubleOrNull() ?: 0.0
+        val durationValue = duration.toIntOrNull() ?: 0
+        
+        return when {
+            rentType.contains("hour") -> price * durationValue
+            rentType.contains("day") -> price * durationValue
+            else -> 0.0
         }
     }
 
-    private fun checkBookingConflicts(
+    private fun startPaymentActivity(
+        amount: Double,
+        customerPhone: String,
+        duration: String,
+        rentType: String,
         startDate: String,
         endDate: String,
         startTime: String?,
         endTime: String?,
-        rentType: String,
-        callback: (Boolean) -> Unit
+        paymentType: String
     ) {
-        // Query Firestore for any bookings of this listing that might conflict
-        firestore.collection("bookings")
-            .whereEqualTo("listingId", listingId)
-            .whereIn("status", listOf("approved", "pending"))
-            .get()
-            .addOnSuccessListener { bookings ->
-                var hasConflict = false
-                
-                for (booking in bookings) {
-                    val bookingData = booking.data
-                    val bookingStartDate = bookingData["startDate"] as? String ?: ""
-                    val bookingEndDate = bookingData["endDate"] as? String ?: ""
-                    val bookingRentType = bookingData["rentType"] as? String ?: ""
-                    val bookingStartTime = bookingData["startTime"] as? String
-                    val bookingEndTime = bookingData["endTime"] as? String
-                    
-                    // Check for date range overlap
-                    val datesOverlap = 
-                        (startDate <= bookingEndDate && endDate >= bookingStartDate)
-                    
-                    // If dates don't overlap, no conflict
-                    if (!datesOverlap) continue
-                    
-                    // For hourly rentals, check time overlap
-                    if (rentType.contains("hour") && bookingRentType.contains("hour") && 
-                        startTime != null && endTime != null && 
-                        bookingStartTime != null && bookingEndTime != null) {
-                        
-                        // If on same day, check for time overlap
-                        if (startDate == bookingStartDate && startDate == endDate && bookingStartDate == bookingEndDate) {
-                            // Check if time periods overlap
-                            val timesOverlap = 
-                                (startTime <= bookingEndTime && endTime >= bookingStartTime)
-                            
-                            if (timesOverlap) {
-                                hasConflict = true
-                                break
-                            }
-                        } else {
-                            // If multi-day hourly booking, consider it a conflict if dates overlap
-                            hasConflict = true
-                            break
-                        }
-                    } else {
-                        // For daily rentals or mixed rentals, consider it a conflict if dates overlap
-                        hasConflict = true
-                        break
-                    }
+        val ownerPhoneNumber = ownerPhone.text.toString()
+        val productNameText = productName.text.toString()
+
+        // Start payment activity with the booking details
+        val intent = Intent(this, PaymentActivity::class.java).apply {
+            putExtra("amount", amount)
+            putExtra("paymentType", paymentType)
+            putExtra("listingName", productNameText)
+            putExtra("duration", duration)
+            putExtra("rentType", rentType)
+            putExtra("customerPhone", customerPhone)
+            putExtra("ownerPhone", ownerPhoneNumber)
+            putExtra("startDate", startDate)
+            putExtra("endDate", endDate)
+            putExtra("startTime", startTime)
+            putExtra("endTime", endTime)
+            putExtra("listingId", listingId)
+        }
+        startActivityForResult(intent, PAYMENT_REQUEST_CODE)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == PAYMENT_REQUEST_CODE) {
+            when (resultCode) {
+                RESULT_OK -> {
+                    Toast.makeText(this, "Payment successful!", Toast.LENGTH_SHORT).show()
+                    finish()
                 }
-                
-                callback(hasConflict)
+                RESULT_CANCELED -> {
+                    Toast.makeText(this, "Payment cancelled", Toast.LENGTH_SHORT).show()
+                }
             }
-            .addOnFailureListener { e ->
-                Log.e(TAG, "Error checking booking conflicts: ${e.message}")
-                // In case of error, assume no conflict to not block user, but log the error
-                callback(false)
-            }
+        }
     }
 
     private fun base64StringToBitmap(encodedString: String): Bitmap? {
@@ -567,5 +505,6 @@ class Customer_detaillisting : BaseActivity() {
 
     companion object {
         private const val TAG = "CustomerDetailListing"
+        private const val PAYMENT_REQUEST_CODE = 1001
     }
 }

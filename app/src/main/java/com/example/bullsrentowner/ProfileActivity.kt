@@ -10,12 +10,15 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import java.text.NumberFormat
+import java.util.*
 
 class ProfileActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
     private val db = FirebaseFirestore.getInstance()
     private val userCollection = db.collection("users")
+    private val bookingsCollection = db.collection("bookings")
 
     private lateinit var ivProfileImage: ImageView
     private lateinit var etPhoneNumber: EditText
@@ -24,6 +27,9 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var etCompanyName: EditText
     private lateinit var btnSaveUpdate: Button
     private lateinit var btnSignOut: Button
+    private lateinit var btnViewPaymentHistory: Button
+    private lateinit var tvTotalEarnings: TextView
+    private lateinit var tvPendingPayments: TextView
     private lateinit var progressBar: ProgressBar
 
     private var isProfileLoaded = false
@@ -49,8 +55,10 @@ class ProfileActivity : AppCompatActivity() {
         etPhoneNumber.isEnabled = false  // Phone number should not be editable
 
         fetchUserProfile()  // Auto-fetch user profile on page load
+        fetchPaymentInformation() // Fetch payment information
         btnSaveUpdate.setOnClickListener { saveOrUpdateProfile() }
         btnSignOut.setOnClickListener { signOutUser() }
+        btnViewPaymentHistory.setOnClickListener { viewPaymentHistory() }
 
         setupTextWatchers()
     }
@@ -63,9 +71,67 @@ class ProfileActivity : AppCompatActivity() {
         etCompanyName = findViewById(R.id.etCompanyName)
         btnSaveUpdate = findViewById(R.id.btnSaveUpdate)
         btnSignOut = findViewById(R.id.btnSignOut)
+        btnViewPaymentHistory = findViewById(R.id.btnViewPaymentHistory)
+        tvTotalEarnings = findViewById(R.id.tvTotalEarnings)
+        tvPendingPayments = findViewById(R.id.tvPendingPayments)
         progressBar = findViewById(R.id.progressBar)
 
         btnSaveUpdate.isEnabled = false  // Initially disabled until user modifies input
+    }
+
+    private fun fetchPaymentInformation() {
+        if (userPhone.isNullOrEmpty()) return
+
+        progressBar.visibility = View.VISIBLE
+
+        // Fetch completed payments
+        bookingsCollection
+            .whereEqualTo("ownerPhone", userPhone)
+            .whereEqualTo("paymentStatus", "paid")
+            .get()
+            .addOnSuccessListener { documents ->
+                var totalEarnings = 0.0
+                for (document in documents) {
+                    val amount = document.getDouble("amount") ?: 0.0
+                    totalEarnings += amount
+                }
+                tvTotalEarnings.text = formatCurrency(totalEarnings)
+
+                // Fetch pending payments
+                bookingsCollection
+                    .whereEqualTo("ownerPhone", userPhone)
+                    .whereEqualTo("paymentStatus", "partial_paid")
+                    .get()
+                    .addOnSuccessListener { pendingDocs ->
+                        var pendingAmount = 0.0
+                        for (document in pendingDocs) {
+                            val amount = document.getDouble("amount") ?: 0.0
+                            pendingAmount += amount * 0.5 // Assuming 50% is pending for partial payments
+                        }
+                        tvPendingPayments.text = formatCurrency(pendingAmount)
+                        progressBar.visibility = View.GONE
+                    }
+                    .addOnFailureListener { e ->
+                        progressBar.visibility = View.GONE
+                        showToast("Error fetching pending payments: ${e.message}")
+                    }
+            }
+            .addOnFailureListener { e ->
+                progressBar.visibility = View.GONE
+                showToast("Error fetching payment information: ${e.message}")
+            }
+    }
+
+    private fun formatCurrency(amount: Double): String {
+        val format = NumberFormat.getCurrencyInstance(Locale("en", "IN"))
+        return format.format(amount)
+    }
+
+    private fun viewPaymentHistory() {
+        val intent = Intent(this, PaymentHistoryActivity::class.java).apply {
+            putExtra("USER_PHONE", userPhone)
+        }
+        startActivity(intent)
     }
 
     private fun fetchUserProfile() {

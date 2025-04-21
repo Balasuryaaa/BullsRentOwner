@@ -14,7 +14,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.ktx.Firebase
 import java.io.ByteArrayOutputStream
 import java.util.*
 
@@ -48,20 +50,27 @@ class AddListingActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_listing)
 
-        auth = FirebaseAuth.getInstance()
-        firestore = FirebaseFirestore.getInstance()
+        try {
+            // Initialize Firebase Auth
+            auth = Firebase.auth
+            firestore = FirebaseFirestore.getInstance()
 
-        // Retrieve phone number from intent
-        userPhone = intent.getStringExtra("USER_PHONE")
+            // Retrieve phone number from intent
+            userPhone = intent.getStringExtra("USER_PHONE")
 
-        if (userPhone.isNullOrEmpty()) {
-            showToast("Error: No phone number provided.")
+            if (userPhone.isNullOrEmpty()) {
+                showToast("Error: No phone number provided.")
+                finish()
+                return
+            }
+
+            initializeUI()
+            fetchUserProfile()
+        } catch (e: Exception) {
+            Log.e("AddListingActivity", "Error initializing Firebase: ${e.message}")
+            showToast("Error initializing Firebase. Please try again.")
             finish()
-            return
         }
-
-        initializeUI()
-        fetchUserProfile()
     }
 
     private fun initializeUI() {

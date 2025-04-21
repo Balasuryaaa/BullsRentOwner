@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Theme Colors -->
+    <color name="primary">#FFD700</color>
+    <color name="primaryDark">#B8860B</color>
+    <color name="primaryVariant">#DAA520</color>
+    <color name="secondary">#FFA500</color>
+    <color name="secondaryVariant">#FF8C00</color>
+
+    <!-- Unified Yellow-Black Color Scheme -->
+    <color name="background_color">#121212</color>
+    <color name="primary_color">#FFD700</color>
+    <color name="primary_dark_color">#B8860B</color>
+    <color name="accent_color">#FFA500</color>
+    <color name="text_primary_color">#FFFFFF</color>
+    <color name="text_secondary_color">#B3FFFFFF</color>
+    <color name="divider_color">#1FFFFFFF</color>
+    <color name="card_background">#272727</color>
+    <color name="button_color">#FFD700</color>
+    <color name="button_text_color">#000000</color>
+    <color name="nav_bar_color">#272727</color>
+
+    <!-- Status Colors - Slightly muted for dark theme -->
+    <color name="status_pending_text">#FFB74D</color>
+    <color name="status_pending_bg">#332E1B</color>
+    <color name="status_approved_text">#66BB6A</color>
+    <color name="status_approved_bg">#1B2E1F</color>
+    <color name="status_rejected_text">#EF5350</color>
+    <color name="status_rejected_bg">#2E1B1B</color>
+    <color name="status_completed_text">#42A5F5</color>
+    <color name="status_completed_bg">#1B262E</color>
+    <color name="status_unknown_text">#9E9E9E</color>
+    <color name="status_unknown_bg">#272727</color>
+</resources> 

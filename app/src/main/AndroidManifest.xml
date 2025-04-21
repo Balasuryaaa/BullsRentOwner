@@ -87,6 +87,13 @@
         <activity android:name=".OwnerOrdersActivity" 
             android:exported="false"
             android:theme="@style/Theme.BullsRentOwner" />
+        <activity
+            android:name=".PaymentActivity"
+            android:exported="false" />
+        <activity
+            android:name=".PaymentHistoryActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NoActionBar" />
     </application>
 
 </manifest>
